@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Challenge {
+  id           Int           @id @default(autoincrement())
+  name         String
+  url          String?
+  platform     String        @default("")
+  platformUrl  String?
+  tldr         String        @default("")
+  category     String        @default("")
+  readmePath   String
+  groupPath    String        @default("")
+  solveScripts SolveScript[]
+  tags         Tag[]
+}
+
+model SolveScript {
+  id          Int       @id @default(autoincrement())
+  challengeId Int
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  name        String
+  url         String
+  language    String
+}
+
+model Tag {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  challenges Challenge[]
+}
+
+model Vulnerability {
+  id         Int       @id @default(autoincrement())
+  name       String
+  severity   String    @default("")
+  cve        String    @default("")
+  complexity String    @default("")
+  summary    String    @default("")
+  readmePath String
+  groupPath  String    @default("")
+  tags       VulnTag[]
+}
+
+model VulnTag {
+  id              Int             @id @default(autoincrement())
+  name            String          @unique
+  vulnerabilities Vulnerability[]
+}

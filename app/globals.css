@@ -1,0 +1,609 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── Custom Fonts ────────────────────────────────────────────── */
+
+@font-face {
+  font-family: 'Hack';
+  src: url('/fonts/hack/hack-regular.woff2') format('woff2'),
+       url('/fonts/hack/hack-regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Hack';
+  src: url('/fonts/hack/hack-bold.woff2') format('woff2'),
+       url('/fonts/hack/hack-bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: 'Hack', ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+  /* ─── shadcn/ui base tokens ─────────────────────────────── */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.129 0.042 264.695);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.129 0.042 264.695);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.129 0.042 264.695);
+  --primary: oklch(0.208 0.042 265.755);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --secondary: oklch(0.968 0.007 247.896);
+  --secondary-foreground: oklch(0.208 0.042 265.755);
+  --muted: oklch(0.968 0.007 247.896);
+  --muted-foreground: oklch(0.554 0.046 257.417);
+  --accent: oklch(0.968 0.007 247.896);
+  --accent-foreground: oklch(0.208 0.042 265.755);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.929 0.013 255.508);
+  --input: oklch(0.929 0.013 255.508);
+  --ring: oklch(0.704 0.04 256.788);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.984 0.003 247.858);
+  --sidebar-foreground: oklch(0.129 0.042 264.695);
+  --sidebar-primary: oklch(0.208 0.042 265.755);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
+  --sidebar-border: oklch(0.929 0.013 255.508);
+  --sidebar-ring: oklch(0.704 0.04 256.788);
+
+  /* ─── Original markdown-render theme (dark default) ─────── */
+  --mr-bg: #0d1117;
+  --mr-surface: #161b22;
+  --mr-surface-hover: #1c2128;
+  --mr-surface-elevated: #21262d;
+  --mr-border: #30363d;
+  --mr-border-dim: rgba(48, 54, 61, 0.6);
+  --mr-text: #c9d1d9;
+  --mr-text-bright: #f0f6fc;
+  --mr-subtext: #8b949e;
+  --mr-accent: #58a6ff;
+  --mr-accent-dim: rgba(88, 166, 255, 0.12);
+  --mr-accent-glow: rgba(88, 166, 255, 0.25);
+  --mr-green: #3fb950;
+  --mr-green-dim: rgba(63, 185, 80, 0.12);
+  --mr-red: #f85149;
+  --mr-red-dim: rgba(248, 81, 73, 0.12);
+  --mr-yellow: #d29922;
+  --mr-magenta: #f778ba;
+  --mr-cyan: #56d4dd;
+  --mr-code-bg: #0d1117;
+  --mr-selection-bg: rgba(88, 166, 255, 0.2);
+  --mr-radius: 10px;
+  --mr-radius-sm: 6px;
+  --mr-max-width: 800px;
+  --mr-nav-width: 220px;
+  --mr-sidebar-width: 250px;
+  --mr-content-gap: 2rem;
+}
+
+.dark {
+  --background: oklch(0.129 0.042 264.695);
+  --foreground: oklch(0.984 0.003 247.858);
+  --card: oklch(0.208 0.042 265.755);
+  --card-foreground: oklch(0.984 0.003 247.858);
+  --popover: oklch(0.208 0.042 265.755);
+  --popover-foreground: oklch(0.984 0.003 247.858);
+  --primary: oklch(0.929 0.013 255.508);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --secondary: oklch(0.279 0.041 260.031);
+  --secondary-foreground: oklch(0.984 0.003 247.858);
+  --muted: oklch(0.279 0.041 260.031);
+  --muted-foreground: oklch(0.704 0.04 256.788);
+  --accent: oklch(0.279 0.041 260.031);
+  --accent-foreground: oklch(0.984 0.003 247.858);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.551 0.027 264.364);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.208 0.042 265.755);
+  --sidebar-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.551 0.027 264.364);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ── Code blocks ─────────────────────────────────────────────── */
+.code-block-wrapper {
+  position: relative;
+  margin: 1rem 0;
+  border-radius: var(--mr-radius);
+  overflow: hidden;
+  border: 1px solid var(--mr-border);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.25s ease;
+}
+
+.code-block-wrapper:hover {
+  border-color: var(--mr-accent);
+  box-shadow: 0 0 0 1px var(--mr-accent-dim), 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: var(--mr-surface);
+  border-bottom: 1px solid var(--mr-border);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.code-language {
+  color: var(--mr-subtext);
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.copy-button {
+  background: var(--mr-surface-elevated);
+  border: 1px solid var(--mr-border);
+  color: var(--mr-subtext);
+  padding: 0.25rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.72rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.copy-button:hover {
+  border-color: var(--mr-accent);
+  color: var(--mr-accent);
+  background: var(--mr-accent-dim);
+}
+
+.copy-button.copied {
+  border-color: var(--mr-green);
+  color: var(--mr-green);
+  background: var(--mr-green-dim);
+}
+
+/* ── Callouts ─────────────────────────────────────────────────── */
+.callout {
+  border: 1px solid;
+  border-left-width: 4px;
+  border-radius: var(--mr-radius);
+  background: var(--mr-surface);
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+}
+
+.callout-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.callout-icon { font-size: 1rem; line-height: 1; }
+.callout-title { font-weight: 600; }
+
+.callout-body { color: var(--mr-text); font-style: normal; }
+.callout-body > p:first-child { margin-top: 0; }
+.callout-body > p:last-child  { margin-bottom: 0; }
+
+.callout-error   { border-color: var(--mr-red); border-left-color: var(--mr-red); background: var(--mr-red-dim); }
+.callout-error   .callout-label { color: var(--mr-red); }
+
+.callout-warning { border-color: var(--mr-yellow); border-left-color: var(--mr-yellow); background: rgba(210, 153, 34, 0.08); }
+.callout-warning .callout-label { color: var(--mr-yellow); }
+
+.callout-info    { border-color: var(--mr-accent); border-left-color: var(--mr-accent); background: var(--mr-accent-dim); }
+.callout-info    .callout-label { color: var(--mr-accent); }
+
+.callout-hint    { border-color: var(--mr-green); border-left-color: var(--mr-green); background: var(--mr-green-dim); }
+.callout-hint    .callout-label { color: var(--mr-green); }
+
+.callout-test    { border-color: var(--mr-cyan); border-left-color: var(--mr-cyan); background: rgba(86, 212, 221, 0.08); }
+.callout-test    .callout-label { color: var(--mr-cyan); }
+
+.callout-perf    { border-color: var(--mr-subtext); border-left-color: var(--mr-subtext); background: rgba(139, 148, 158, 0.06); }
+.callout-perf    .callout-label { color: var(--mr-subtext); }
+
+.callout-vuln    { border-color: var(--mr-red); border-left-color: var(--mr-red); background: var(--mr-red-dim); }
+.callout-vuln    .callout-label { color: var(--mr-red); }
+
+/* ── Chess boards ─────────────────────────────────────────────── */
+figure.chess-board {
+  display: inline-block;
+  margin: 1.5rem auto;
+  text-align: center;
+}
+
+figure.chess-board svg {
+  display: block;
+  margin: 0 auto;
+  border-radius: var(--mr-radius);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+figure.chess-board figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--mr-subtext);
+  font-style: italic;
+}
+
+a.chess-open {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+  color: var(--mr-accent);
+  text-decoration: none;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+a.chess-open:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.chess-steps { position: relative; }
+
+.chess-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.6rem;
+}
+
+.chess-nav button {
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-border);
+  color: var(--mr-text);
+  border-radius: var(--mr-radius);
+  padding: 0.2rem 0.75rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  line-height: 1.6;
+}
+
+.chess-nav button:hover:not(:disabled) { background: var(--mr-border); }
+.chess-nav button:disabled { opacity: 0.3; cursor: default; }
+
+.chess-move-label {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--mr-accent);
+  min-width: 12rem;
+  text-align: center;
+}
+
+.chess-ann {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  font-family: var(--font-mono);
+  color: #fff;
+  padding: 0.05em 0.3em;
+  border-radius: 3px;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+
+.chess-error {
+  background: var(--mr-red-dim);
+  border: 1px solid var(--mr-red);
+  color: var(--mr-red);
+  padding: 0.75rem 1rem;
+  border-radius: var(--mr-radius);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  margin: 1rem 0;
+}
+
+/* ── Images ───────────────────────────────────────────────────── */
+figure.md-image {
+  display: block;
+  margin: 1.5rem auto;
+  text-align: center;
+}
+
+figure.md-image img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  border-radius: var(--mr-radius);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+}
+
+figure.md-image figcaption {
+  margin-top: 0.6rem;
+  font-size: 0.9rem;
+  color: var(--mr-subtext);
+  font-style: italic;
+  text-align: center;
+}
+
+.md-image-bg {
+  display: inline-block;
+  border-radius: var(--mr-radius);
+  padding: 0.5rem;
+}
+
+.md-image-bg img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  border-radius: calc(var(--mr-radius) - 2px);
+}
+
+/* ── Image errors ─────────────────────────────────────────────── */
+.image-error {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem;
+  margin: 1rem 0;
+  background: var(--mr-red-dim);
+  border: 1px solid rgba(248, 81, 73, 0.25);
+  border-radius: var(--mr-radius);
+  color: var(--mr-red);
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+}
+
+.image-error-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.image-error code {
+  background: rgba(248, 81, 73, 0.15);
+  color: var(--mr-red);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+  font-size: 0.85em;
+}
+
+/* ── Missing links ────────────────────────────────────────────── */
+a.link-missing {
+  color: var(--mr-red);
+  text-decoration: underline;
+  text-decoration-color: var(--mr-red);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+}
+
+a.link-missing:hover {
+  filter: drop-shadow(0 0 8px rgba(248, 81, 73, 0.3));
+  text-decoration-color: var(--mr-red);
+}
+
+/* ── Wiki links ───────────────────────────────────────────────── */
+a.wiki-link {
+  color: var(--mr-accent);
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-decoration-color: var(--mr-accent-dim);
+  text-underline-offset: 0.2em;
+  transition: all 0.2s ease;
+}
+
+a.wiki-link:hover {
+  text-decoration-style: solid;
+  text-decoration-color: var(--mr-accent);
+  filter: drop-shadow(0 0 6px var(--mr-accent-glow));
+}
+
+.wiki-link-missing {
+  color: var(--mr-subtext);
+  border-bottom: 1px dashed var(--mr-red);
+  text-decoration: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ── Vulnerability links ──────────────────────────────────────── */
+a.vuln-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mr-red);
+  text-decoration: none;
+  background: var(--mr-red-dim);
+  border: 1px solid var(--mr-red);
+  border-radius: var(--mr-radius);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+}
+
+a.vuln-link:hover {
+  background: var(--mr-red);
+  color: var(--mr-bg);
+  text-decoration: none;
+}
+
+.vuln-link-icon {
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.vuln-link-missing {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--mr-subtext);
+  background: var(--mr-surface);
+  border: 1px dashed var(--mr-border);
+  border-radius: var(--mr-radius);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Meta bar / tags ──────────────────────────────────────────── */
+.meta-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+}
+
+.meta-field {
+  color: var(--mr-subtext);
+}
+
+.meta-field .meta-key {
+  color: var(--mr-accent);
+  opacity: 0.7;
+  margin-right: 0.25rem;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-border);
+  border-radius: 9999px;
+  padding: 0.2em 0.7em;
+  color: var(--mr-text);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  transition: all 0.2s ease;
+  gap: 0.2rem;
+}
+
+.tag-chip::before {
+  content: "#";
+  color: var(--mr-subtext);
+  opacity: 0.6;
+}
+
+.tag-chip:hover {
+  background: var(--mr-accent-dim);
+  border-color: var(--mr-accent);
+  color: var(--mr-accent);
+  text-decoration: none;
+}
+
+.meta-sep {
+  color: var(--mr-border);
+  user-select: none;
+}
+
+.date-badge {
+  color: var(--mr-subtext);
+  font-size: 0.85rem;
+}
+
+/* ── Frontmatter ──────────────────────────────────────────────── */
+.frontmatter {
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-border);
+  border-radius: var(--mr-radius);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  font-family: var(--font-mono);
+  color: var(--mr-subtext);
+  margin-bottom: 1.5rem;
+}
+
+/* ── KaTeX overrides ──────────────────────────────────────────── */
+.katex-display {
+  margin: 1.5rem 0;
+  overflow-x: auto;
+}
+
+.katex {
+  font-size: 1.07em;
+}
