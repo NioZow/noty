@@ -181,6 +181,7 @@ function preprocessMarkdown(source: string, docDir: string): string {
   });
 
   out = rewriteReadmeMdLinks(out);
+  out = markMissingLocalLinks(out, docDir);
 
   return out;
 }
@@ -421,6 +422,55 @@ function rewriteReadmeMdLinks(source: string): string {
       return `[${text}](${prefix + fragment})`;
     },
   );
+}
+
+// ---------------------------------------------------------------------------
+// Missing local-link detection
+// ---------------------------------------------------------------------------
+
+// Plain markdown links only — `(?<!!)` excludes image syntax `![alt](url)`.
+const MD_LINK_RE = /(?<!!)\[([^\]]+)\]\(([^)]+)\)/g;
+
+/**
+ * Mark plain markdown links that point at a local file/folder which doesn't
+ * exist on disk, so the `a` component can render them with the
+ * `data-missing` broken-link style instead of a normal link.
+ */
+function markMissingLocalLinks(source: string, docDir: string): string {
+  return source.replace(MD_LINK_RE, (match, text: string, url: string) => {
+    if (!isLocalLinkMissing(url, docDir)) return match;
+    return `<a href="${escapeHtml(url)}" data-missing="true">${escapeHtml(text)}</a>`;
+  });
+}
+
+const EXTERNAL_LINK_RE = /^([a-z][a-z0-9+.-]*:)?\/\//i;
+const NON_FILE_SCHEME_RE = /^(mailto|tel|data):/i;
+
+function isLocalLinkMissing(url: string, docDir: string): boolean {
+  const withoutFragment = url.split("#")[0].split("?")[0];
+  if (!withoutFragment) return false; // pure in-page anchor/query, not a file reference
+
+  if (EXTERNAL_LINK_RE.test(withoutFragment) || NON_FILE_SCHEME_RE.test(withoutFragment)) {
+    return false;
+  }
+
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(withoutFragment);
+  } catch {
+    return false;
+  }
+
+  const root = path.resolve(notesDir());
+  const target = decoded.startsWith("/")
+    ? path.join(root, decoded)
+    : path.resolve(docDir, decoded);
+
+  const rel = path.relative(root, target);
+  if (rel.startsWith("..") || path.isAbsolute(rel)) return false; // outside the vault, don't flag
+
+  if (existsSync(target) || existsSync(`${target}.md`)) return false;
+  return true;
 }
 
 // ---------------------------------------------------------------------------

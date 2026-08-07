@@ -17,6 +17,30 @@ const SIDEBAR_WIDTH = 288; // px, matches w-72
 const SIDEBAR_COLLAPSED_KEY = "mr-sidebar-collapsed";
 
 /**
+ * Find the expand button of the mermaid diagram vertically closest to the
+ * viewport center, so Ctrl+F expands whichever diagram the user is looking
+ * at rather than always the first one on the page.
+ */
+function closestMermaidExpandButton(): HTMLButtonElement | null {
+  const wrappers = document.querySelectorAll<HTMLElement>(".mermaid-wrapper");
+  if (wrappers.length === 0) return null;
+
+  const viewportCenter = window.innerHeight / 2;
+  let closest: HTMLElement | null = null;
+  let closestDist = Infinity;
+  for (const wrapper of wrappers) {
+    const rect = wrapper.getBoundingClientRect();
+    const dist = Math.abs(rect.top + rect.height / 2 - viewportCenter);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = wrapper;
+    }
+  }
+
+  return closest?.querySelector<HTMLButtonElement>(".mermaid-expand-btn") ?? null;
+}
+
+/**
  * Two-column layout: lazily-loaded note tree on the right, content on the left.
  *
  * Only the root folder entries mount initially.  Every folder fetches its
@@ -44,6 +68,14 @@ export function NoteLayout({ entries, children }: NoteLayoutProps) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e") {
         e.preventDefault();
         toggleCollapsed();
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
+        const expandBtn = closestMermaidExpandButton();
+        if (expandBtn) {
+          e.preventDefault();
+          expandBtn.click();
+        }
       }
     }
     window.addEventListener("keydown", handleKey);

@@ -304,15 +304,16 @@
 }
 
 .prose a {
-  color: var(--mr-accent);
-  text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: border-color 0.2s ease, color 0.2s ease;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--mr-subtext);
+  text-underline-offset: 0.2em;
+  text-decoration-thickness: 1px;
+  transition: text-decoration-color 0.2s ease;
 }
 
 .prose a:hover {
-  border-bottom-color: var(--mr-accent-dim);
-  color: var(--mr-text);
+  text-decoration-color: var(--mr-accent);
 }
 
 .prose strong {
@@ -1053,7 +1054,7 @@ figure.md-image figcaption {
    ═══════════════════════════════════════════════════════════════ */
 
 a.link-missing {
-  color: var(--mr-red);
+  color: inherit;
   text-decoration: underline;
   text-decoration-color: var(--mr-red);
   text-underline-offset: 0.2em;

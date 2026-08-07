@@ -109,7 +109,7 @@ export function MermaidDiagram({ source }: MermaidDiagramProps) {
           type="button"
           className="mermaid-expand-btn"
           aria-label="Expand diagram fullscreen"
-          title="Expand fullscreen"
+          title="Expand fullscreen (Ctrl+F)"
           onClick={() => setFullscreen(true)}
         >
           <Maximize2 size={14} />
