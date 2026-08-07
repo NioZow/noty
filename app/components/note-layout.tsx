@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Folder, FolderOpen, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight, Folder, FolderOpen, FileText } from "lucide-react";
 import type { NoteTreeEntry } from "@/app/lib/types";
 import CommandPalette from "@/app/components/command-palette";
 
@@ -13,58 +13,121 @@ export interface NoteLayoutProps {
   children: React.ReactNode;
 }
 
+const SIDEBAR_WIDTH = 288; // px, matches w-72
+const SIDEBAR_COLLAPSED_KEY = "mr-sidebar-collapsed";
+
 /**
- * Two-column layout: lazily-loaded note tree on the left, content on the right.
+ * Two-column layout: lazily-loaded note tree on the right, content on the left.
  *
  * Only the root folder entries mount initially.  Every folder fetches its
- * children via `/api/tree?path=` on first expand.
+ * children via `/api/tree?path=` on first expand.  The sidebar can be
+ * folded away via the toggle button on its edge; the collapsed state is
+ * remembered across page loads.
  */
 export function NoteLayout({ entries, children }: NoteLayoutProps) {
+  const [collapsed, setCollapsed] = React.useState(false);
+
+  React.useEffect(() => {
+    setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+  }, []);
+
+  const toggleCollapsed = React.useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  }, []);
+
+  React.useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        toggleCollapsed();
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [toggleCollapsed]);
+
   return (
     <div className="flex min-h-screen">
-      {/* ── Sidebar ───────────────────────────────────────────────────── */}
-      <aside
-        className="w-72 shrink-0 overflow-y-auto hidden md:flex md:flex-col gap-6 p-5"
-        style={{
-          background: "var(--mr-surface)",
-          borderRight: "1px solid var(--mr-border)",
-        }}
-      >
-        <div>
-          <Link
-            href="/"
-            className="sidebar-brand"
-            style={{ color: "var(--mr-text)" }}
-          >
-            Notes
-          </Link>
-        </div>
-
-        <CommandPalette />
-
-        <nav className="flex-1 overflow-y-auto">
-          <NoteTree entries={entries} />
-        </nav>
-
-        <div
-          className="mt-auto pt-4 space-y-1"
-          style={{ borderTop: "1px solid var(--mr-border)" }}
-        >
-          <SidebarLink href="/challenges">Challenges</SidebarLink>
-          <SidebarLink href="/vulnerabilities">Vulnerabilities</SidebarLink>
-          <SidebarLink href="/tags">Tags</SidebarLink>
-        </div>
-      </aside>
-
       {/* ── Main ──────────────────────────────────────────────────────── */}
       <main
         className="flex-1 min-w-0 p-6 lg:p-10"
-        style={{ maxWidth: "calc(100vw - 288px)" }}
+        style={{ maxWidth: `calc(100vw - ${collapsed ? 0 : SIDEBAR_WIDTH}px)` }}
       >
-        <div style={{ maxWidth: "var(--mr-max-width)", margin: "0 auto" }}>
+        <div
+          style={{
+            maxWidth: "var(--mr-max-width)",
+            marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
+          }}
+        >
           {children}
         </div>
       </main>
+
+      {/* ── Sidebar fold toggle ──────────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={toggleCollapsed}
+        aria-label={collapsed ? "Show sidebar" : "Hide sidebar"}
+        title={`${collapsed ? "Show" : "Hide"} sidebar (⌘E)`}
+        className="hidden md:flex fixed top-1/2 z-10 h-8 w-5 items-center justify-center rounded-l transition-[right] duration-200"
+        style={{
+          right: collapsed ? 0 : SIDEBAR_WIDTH,
+          transform: "translateY(-50%)",
+          background: "var(--mr-surface)",
+          border: "1px solid var(--mr-border)",
+          borderRight: "none",
+          color: "var(--mr-subtext)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--mr-accent)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--mr-subtext)")}
+      >
+        {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
+
+      {/* ── Sidebar ───────────────────────────────────────────────────── */}
+      <aside
+        className="shrink-0 hidden md:block overflow-hidden sticky top-0 self-start transition-[width] duration-200"
+        style={{
+          width: collapsed ? 0 : SIDEBAR_WIDTH,
+          height: "100vh",
+          background: "var(--mr-surface)",
+          borderLeft: collapsed ? "none" : "1px solid var(--mr-border)",
+        }}
+      >
+        <div
+          className="flex flex-col gap-6 p-5 h-full overflow-y-auto"
+          style={{ width: SIDEBAR_WIDTH }}
+        >
+          <div>
+            <Link
+              href="/"
+              className="sidebar-brand"
+              style={{ color: "var(--mr-text)" }}
+            >
+              Notes
+            </Link>
+          </div>
+
+          <CommandPalette />
+
+          <nav className="flex-1 overflow-y-auto">
+            <NoteTree entries={entries} />
+          </nav>
+
+          <div
+            className="mt-auto pt-4 space-y-1"
+            style={{ borderTop: "1px solid var(--mr-border)" }}
+          >
+            <SidebarLink href="/challenges">Challenges</SidebarLink>
+            <SidebarLink href="/vulnerabilities">Vulnerabilities</SidebarLink>
+            <SidebarLink href="/tags">Tags</SidebarLink>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
