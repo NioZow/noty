@@ -221,9 +221,6 @@
   padding-bottom: 0.875rem;
   border-bottom: 1px solid var(--mr-border);
   color: var(--mr-text);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  word-spacing: 0.04em;
 }
 .prose h1::before {
   content: "# ";
@@ -239,9 +236,6 @@
   padding-bottom: 0.625rem;
   border-bottom: 1px solid var(--mr-border-dim);
   color: var(--mr-text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  word-spacing: 0.03em;
 }
 .prose h2::before {
   content: "## ";
@@ -255,8 +249,6 @@
   margin-top: 2.25rem;
   margin-bottom: 0.875rem;
   color: var(--mr-text);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
 }
 .prose h3::before {
   content: "### ";
@@ -271,6 +263,10 @@
   margin-bottom: 0.625rem;
   color: var(--mr-text);
 }
+.prose h4::before {
+  content: "#### ";
+  color: var(--mr-subtext);
+}
 
 .prose h5 {
   font-size: 0.875rem;
@@ -279,8 +275,10 @@
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
   color: var(--mr-text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+}
+.prose h5::before {
+  content: "##### ";
+  color: var(--mr-subtext);
 }
 
 .prose h6 {
@@ -290,8 +288,10 @@
   margin-top: 1.25rem;
   margin-bottom: 0.5rem;
   color: var(--mr-text);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+}
+.prose h6::before {
+  content: "###### ";
+  color: var(--mr-subtext);
 }
 
 .prose p {
