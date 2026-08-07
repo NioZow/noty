@@ -120,8 +120,7 @@ function buildComponents(ctx: ComponentCtx): Components {
     },
 
     blockquote(props) {
-      const raw = extractRawText(props.children);
-      const callout = tryParseCallout(raw);
+      const callout = parseCalloutFromChildren(props.children);
       if (callout) {
         return (
           <Callout keyword={callout.keyword} title={callout.title}>
@@ -237,40 +236,53 @@ function cn(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-/**
- * Extract plain text from React children for callout detection.
- */
-function extractRawText(node: ReactNode): string {
-  if (typeof node === "string") return node;
-  if (typeof node === "number") return String(node);
-  if (Array.isArray(node)) return node.map(extractRawText).join("");
-  if (React.isValidElement(node)) {
-    const text = extractRawText((node.props as { children?: ReactNode }).children);
-    // If the outer element is a <p>, we need the raw inner text including leading `[!KEYWORD]`
-    return text;
-  }
-  return "";
-}
+/** Matches `[!KEYWORD]`, `[!KEYWORD] Title`, or `[!KEYWORD]\nrest of paragraph`. */
+const CALLOUT_RE = /^\[!([A-Za-z0-9_]+)\]([^\n]*)\n?([\s\S]*)$/;
 
 /**
- * Try to parse a callout from the first line of a blockquote.
+ * Try to parse a callout from a blockquote's rendered children.
  *
- * Matches patterns produced by GFM blockquotes where the first paragraph
- * starts with `[!KEYWORD]` or `[!KEYWORD] Title`.
+ * Matches GFM blockquotes whose first paragraph starts with `[!KEYWORD]` or
+ * `[!KEYWORD] Title`, mirroring GitHub's alert syntax. Operates on the actual
+ * React node tree (rather than a flattened string) so that formatting inside
+ * the callout body — bold, code, links, subsequent paragraphs/lists — survives
+ * intact instead of being collapsed to plain text.
  */
-function tryParseCallout(raw: string): { keyword: string; title?: string; body: ReactNode } | null {
-  // The raw text from react-markdown blockquote includes nested <p> tags.
-  // We extract the text from the first paragraph only.
-  const lines = raw.split("\n");
-  const firstParagraphMatch = lines[0]?.match(/^\[!([A-Z0-9_]+)\]\s*(.*)/);
-  if (!firstParagraphMatch) return null;
+function parseCalloutFromChildren(
+  children: ReactNode,
+): { keyword: string; title?: string; body: ReactNode } | null {
+  const items = React.Children.toArray(children);
+  const firstIdx = items.findIndex((c) => !(typeof c === "string" && c.trim() === ""));
+  const first = items[firstIdx];
+  if (firstIdx === -1 || !React.isValidElement(first) || first.type !== "p") return null;
 
-  const keyword = firstParagraphMatch[1].toUpperCase();
-  const title = firstParagraphMatch[2].trim() || undefined;
+  const pProps = first.props as { children?: ReactNode };
+  const pItems = React.Children.toArray(pProps.children);
+  const textIdx = pItems.findIndex((c) => typeof c === "string" && c.trim() !== "");
+  if (textIdx === -1) return null;
 
-  // Re-assemble remaining content
-  const remaining = lines.slice(1).join("\n").trim();
-  return { keyword, title, body: remaining || undefined };
+  const match = CALLOUT_RE.exec((pItems[textIdx] as string).replace(/^\s+/, ""));
+  if (!match) return null;
+
+  const keyword = match[1].toUpperCase();
+  const title = match[2].trim() || undefined;
+  const restOfParagraph = match[3];
+
+  const newPItems = [...pItems];
+  if (restOfParagraph) {
+    newPItems[textIdx] = restOfParagraph;
+  } else {
+    newPItems.splice(textIdx, 1);
+  }
+
+  const bodyItems = [...items];
+  if (newPItems.length === 0) {
+    bodyItems.splice(firstIdx, 1);
+  } else {
+    bodyItems[firstIdx] = React.cloneElement(first, undefined, ...newPItems);
+  }
+
+  return { keyword, title, body: bodyItems.length > 0 ? bodyItems : undefined };
 }
 
 /**
