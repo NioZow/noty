@@ -14,7 +14,8 @@
 import React from "react";
 import { Chessboard } from "react-chessboard";
 import type { Arrow } from "react-chessboard";
-import { Chess } from "chess.js";
+import { Chess, validateFen } from "chess.js";
+import { load as loadYaml } from "js-yaml";
 
 // ---------------------------------------------------------------------------
 // Themes
@@ -59,6 +60,16 @@ const THEMES: Record<string, BoardColors> = {
 };
 
 const DEFAULT_THEME = "classic";
+
+/**
+ * Construct a Chess instance from a FEN that may describe a diagram-only
+ * position (e.g. missing a king) rather than a legal, in-progress game.
+ * Full validation already happened in `boardFromData`, so re-parsing a FEN
+ * derived from it (or passed through from it) can safely skip validation.
+ */
+function newChess(fen?: string): Chess {
+  return fen ? new Chess(fen, { skipValidation: true }) : new Chess();
+}
 
 interface BoardColors {
   lightSquare: string;
@@ -161,7 +172,7 @@ function StaticBoard(props: {
 }) {
   const { fen, caption, colors, orientation, arrows, highlight } = props;
   const turnText =
-    new Chess(fen).turn() === "w" ? "White to move" : "Black to move";
+    newChess(fen).turn() === "w" ? "White to move" : "Black to move";
   const figCaption = caption ? `${caption} — ${turnText}` : turnText;
 
   return (
@@ -201,29 +212,28 @@ function InteractiveBoard(props: {
 }) {
   const { initialFen, steps, caption, colors, orientation } = props;
   const [index, setIndex] = React.useState(0);
-  const gameRef = React.useRef(new Chess(initialFen));
 
-  React.useEffect(() => {
-    gameRef.current = new Chess(initialFen);
-    const g = gameRef.current;
+  const game = React.useMemo(() => {
+    const g = newChess(initialFen);
     for (let i = 0; i < index; i++) {
       const step = steps[i];
       if (step?.san) {
         try {
-          g.move(step.san);
+          g.move(step.san, { strict: false });
         } catch {
           /* ignore illegal */
         }
       }
     }
+    return g;
   }, [index, initialFen, steps]);
 
-  const currentFen = gameRef.current.fen();
+  const currentFen = game.fen();
   const currentStep = steps[index - 1];
 
   const labelParts: { text: string; annotation?: string }[] = [];
   {
-    const g = new Chess(initialFen);
+    const g = newChess(initialFen);
     for (let i = 0; i < index; i++) {
       const step = steps[i];
       if (!step?.san) continue;
@@ -252,8 +262,8 @@ function InteractiveBoard(props: {
   const captionText =
     index === 0
       ? caption
-        ? `${caption} — ${gameRef.current.turn() === "w" ? "White to move" : "Black to move"}`
-        : gameRef.current.turn() === "w"
+        ? `${caption} — ${game.turn() === "w" ? "White to move" : "Black to move"}`
+        : game.turn() === "w"
           ? "White to move"
           : "Black to move"
       : currentStep?.caption ?? "";
@@ -393,26 +403,54 @@ function boardFromData(data: Record<string, unknown>): Chess {
     return temp;
   }
 
-  const fen = typeof data.fen === "string" ? data.fen : undefined;
-  if (fen) {
+  const rawFen = typeof data.fen === "string" ? data.fen : undefined;
+  if (rawFen) {
+    const fen = normalizeFen(rawFen);
+    const { ok, error } = validateFen(fen);
+    // Diagrams don't always represent a legal, in-progress game (e.g. a single
+    // piece to illustrate movement), so a missing king shouldn't be fatal.
+    const missingKing = !ok && error?.includes("missing") && error?.includes("king");
+    if (!ok && !missingKing) {
+      throw new Error(`Invalid FEN: ${rawFen} (${error})`);
+    }
     try {
-      return new Chess(fen);
+      return newChess(fen);
     } catch {
-      throw new Error("Invalid FEN");
+      throw new Error(`Invalid FEN: ${rawFen}`);
     }
   }
-  return new Chess();
+  return newChess();
 }
 
 // Minimal YAML parser sufficient for chess blocks (avoids bundling js-yaml on client)
+function normalizeFen(fen: string): string {
+  const trimmed = fen.trim();
+  const tokens = trimmed.split(/\s+/);
+  if (tokens.length >= 1 && tokens.length < 6) {
+    const defaults = ["w", "KQkq", "-", "0", "1"];
+    for (let i = tokens.length; i < 6; i++) {
+      tokens.push(defaults[i - 1] ?? "-");
+    }
+    return tokens.join(" ");
+  }
+  return trimmed;
+}
+
 function parseYamlLite(source: string): unknown {
+  try {
+    return loadYaml(source);
+  } catch {
+    // Fallback to custom parser
+    return parseYamlLiteCustom(source);
+  }
+}
+
+function parseYamlLiteCustom(source: string): unknown {
   const lines = source.split("\n");
   const out: Record<string, unknown> = {};
   let key: string | null = null;
   let valueLines: string[] = [];
-  const indentStack: number[] = [];
 
-  // Simple top-level mapping parser for chess blocks:
   for (const line of lines) {
     const m = line.match(/^(\s*)(\w+):\s*(.*)$/);
     if (m) {
@@ -437,7 +475,6 @@ function parseValue(v: string): unknown {
   if (v === "false" || v === "False") return false;
   if (v === "null" || v === "~") return null;
   if (/^-\s/.test(v)) {
-    // array
     return v
       .split("\n")
       .map((l) => l.replace(/^-\s*/, "").trim())
