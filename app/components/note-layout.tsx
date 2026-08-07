@@ -9,6 +9,8 @@ import CommandPalette from "@/app/components/command-palette";
 export interface NoteLayoutProps {
   /** Sidebar tree entries (root-level only, lazily expanded). */
   entries: NoteTreeEntry[];
+  /** Relative path of the page currently shown, used to auto-expand the sidebar to it. */
+  currentPath?: string;
   /** Main content area. */
   children: React.ReactNode;
 }
@@ -48,7 +50,7 @@ function closestMermaidExpandButton(): HTMLButtonElement | null {
  * folded away via the toggle button on its edge; the collapsed state is
  * remembered across page loads.
  */
-export function NoteLayout({ entries, children }: NoteLayoutProps) {
+export function NoteLayout({ entries, currentPath = "", children }: NoteLayoutProps) {
   const [collapsed, setCollapsed] = React.useState(false);
 
   React.useEffect(() => {
@@ -147,7 +149,7 @@ export function NoteLayout({ entries, children }: NoteLayoutProps) {
           <CommandPalette />
 
           <nav className="flex-1 overflow-y-auto">
-            <NoteTree entries={entries} />
+            <NoteTree entries={entries} currentPath={currentPath} />
           </nav>
 
           <div
@@ -198,53 +200,91 @@ function SidebarLink({
 // Lazy tree
 // ---------------------------------------------------------------------------
 
-function NoteTree({ entries }: { entries: NoteTreeEntry[] }) {
+function NoteTree({
+  entries,
+  currentPath,
+}: {
+  entries: NoteTreeEntry[];
+  currentPath: string;
+}) {
   return (
     <ul className="space-y-0.5">
       {entries.map((e) => (
-        <TreeItem key={e.url} entry={e} />
+        <TreeItem key={e.url} entry={e} currentPath={currentPath} />
       ))}
     </ul>
   );
 }
 
-function TreeItem({ entry }: { entry: NoteTreeEntry }) {
+function TreeItem({
+  entry,
+  currentPath,
+}: {
+  entry: NoteTreeEntry;
+  currentPath: string;
+}) {
   const [children, setChildren] = React.useState<NoteTreeEntry[] | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [open, setOpen] = React.useState(entry.is_active);
+  const linkRef = React.useRef<HTMLAnchorElement>(null);
 
   const hasChildren =
     entry.is_dir && (children === null || children.length > 0);
+
+  const loadChildren = React.useCallback(() => {
+    if (children !== null || loading) return;
+    setLoading(true);
+    const rel = entry.url.replace(/^\//, "").replace(/\/$/, "");
+    const qs = new URLSearchParams({ path: rel });
+    if (currentPath) qs.set("current", currentPath);
+    fetch(`/api/tree?${qs.toString()}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then(
+        (
+          data: { name: string; url: string; is_dir: boolean; is_active: boolean }[],
+        ) => {
+          setChildren(
+            data.map((d) => ({
+              name: d.name,
+              url: d.url,
+              is_dir: d.is_dir,
+              is_active: d.is_active,
+              depth: entry.depth + 1,
+              children: [],
+            })),
+          );
+        },
+      )
+      .catch(() => setChildren([]))
+      .finally(() => setLoading(false));
+  }, [entry, children, loading, currentPath]);
 
   const toggle = React.useCallback(() => {
     if (!entry.is_dir) return;
     setOpen((prev) => {
       const next = !prev;
-      if (next && children === null && !loading) {
-        setLoading(true);
-        const rel = entry.url.replace(/^\//, "").replace(/\/$/, "");
-        fetch(`/api/tree?path=${encodeURIComponent(rel)}`, {
-          cache: "no-store",
-        })
-          .then((r) => r.json())
-          .then((data: { name: string; url: string; is_dir: boolean }[]) => {
-            setChildren(
-              data.map((d) => ({
-                name: d.name,
-                url: d.url,
-                is_dir: d.is_dir,
-                is_active: false,
-                depth: entry.depth + 1,
-                children: [],
-              })),
-            );
-          })
-          .catch(() => setChildren([]))
-          .finally(() => setLoading(false));
-      }
+      if (next) loadChildren();
       return next;
     });
-  }, [entry, children, loading]);
+  }, [entry, loadChildren]);
+
+  // Auto-expand and fetch children for the branch containing the active page.
+  React.useEffect(() => {
+    if (entry.is_dir && entry.is_active) {
+      loadChildren();
+    }
+    // Only run once on mount — entry.is_active is fixed for the lifetime of
+    // this item (a new page load remounts the tree from scratch).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Scroll the current page's own entry into view once it mounts.
+  React.useEffect(() => {
+    if (!entry.is_dir && entry.is_active) {
+      linkRef.current?.scrollIntoView({ block: "center" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <li className="select-none">
@@ -269,6 +309,7 @@ function TreeItem({ entry }: { entry: NoteTreeEntry }) {
           <span className="w-4" />
         )}
         <a
+          ref={linkRef}
           href={entry.url}
           className="text-sm truncate flex items-center gap-1.5"
           style={{
@@ -314,7 +355,7 @@ function TreeItem({ entry }: { entry: NoteTreeEntry }) {
       </div>
       {open && children !== null && children.length > 0 && (
         <div className="pl-4 mt-0.5">
-          <NoteTree entries={children} />
+          <NoteTree entries={children} currentPath={currentPath} />
         </div>
       )}
       {open && loading && (

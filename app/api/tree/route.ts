@@ -23,6 +23,7 @@ export interface TreeNode {
 export async function GET(request: Request): Promise<Response> {
   const { searchParams } = new URL(request.url);
   const rawPath = searchParams.get("path") ?? "";
+  const currentPath = searchParams.get("current") ?? "";
 
   let dirPath: string;
   try {
@@ -55,20 +56,23 @@ export async function GET(request: Request): Promise<Response> {
     }
     if (st.isSymbolicLink()) continue;
     const rel = path.relative(root, full).replace(/\\/g, "/") || "";
+    const isActive =
+      currentPath !== "" &&
+      (currentPath === rel || currentPath.startsWith(rel + "/"));
 
     if (st.isDirectory()) {
       items.push({
         name: child,
         url: `/${rel}/`,
         is_dir: true,
-        is_active: false,
+        is_active: isActive,
       });
     } else if (path.extname(child).toLowerCase() === ".md") {
       items.push({
         name: path.basename(child, ".md"),
         url: `/${rel}`,
         is_dir: false,
-        is_active: false,
+        is_active: isActive,
       });
     }
   }
