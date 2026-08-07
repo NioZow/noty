@@ -22,6 +22,7 @@ import type { ReactNode } from "react";
 
 import { ChessBoard } from "./chess-board";
 import { Callout } from "./callout";
+import { MermaidDiagram } from "./mermaid-diagram";
 
 import "katex/dist/katex.min.css";
 
@@ -47,7 +48,7 @@ export interface MarkdownRendererProps {
  * - `rehype-raw` — allows raw HTML inside the markdown output
  *
  * Custom components map:
- * - `code` → Chess boards or syntax-highlighted code blocks
+ * - `code` → Chess boards, Mermaid diagrams, or syntax-highlighted code blocks
  * - `blockquote` → Callout boxes for `> [!KEYWORD]` syntax
  * - `a` → Wiki links, vuln links, and missing-link markers
  * - `img` → Images with optional background colour
@@ -76,7 +77,7 @@ interface ComponentCtx {
 function buildComponents(ctx: ComponentCtx): Components {
   return {
     code(props) {
-      const { className, children, inline, node, ...rest } = props;
+      const { className, children, node, ...rest } = props;
       const match = /language-(\w+)/.exec(className ?? "");
       const lang = match?.[1] ?? "";
       const code = String(children ?? "").replace(/\n$/, "");
@@ -87,13 +88,7 @@ function buildComponents(ctx: ComponentCtx): Components {
       }
 
       if (lang === "mermaid") {
-        return (
-          <pre className="mermaid">
-            <code {...rest} className={className}>
-              {children}
-            </code>
-          </pre>
-        );
+        return <MermaidDiagram source={code} />;
       }
 
       if (!isFencedBlock) {

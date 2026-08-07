@@ -805,6 +805,178 @@ a.chess-open:hover {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   Mermaid diagrams
+   ═══════════════════════════════════════════════════════════════ */
+
+.mermaid-wrapper {
+  position: relative;
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border-radius: var(--mr-radius);
+  border: 1px solid var(--mr-border);
+  background: var(--mr-code-bg);
+  overflow-x: auto;
+}
+
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-loading {
+  min-height: 4rem;
+  align-items: center;
+  color: var(--mr-subtext);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.mermaid-error {
+  background: var(--mr-red-dim);
+  border: 1px solid var(--mr-red);
+  color: var(--mr-red);
+  padding: 0.875rem 1.125rem;
+  border-radius: var(--mr-radius);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  margin: 1.25rem 0;
+}
+
+.mermaid-expand-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  background: var(--mr-surface);
+  border: 1px solid var(--mr-border);
+  border-radius: var(--mr-radius-sm);
+  color: var(--mr-subtext);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.mermaid-wrapper:hover .mermaid-expand-btn,
+.mermaid-expand-btn:focus-visible {
+  opacity: 1;
+}
+
+.mermaid-expand-btn:hover {
+  border-color: var(--mr-accent);
+  color: var(--mr-accent);
+  background: var(--mr-accent-dim);
+}
+
+.mermaid-fs-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(10, 10, 18, 0.85);
+  backdrop-filter: blur(2px);
+}
+
+.mermaid-fs-content {
+  position: fixed;
+  inset: 0;
+  z-index: 101;
+  display: flex;
+  flex-direction: column;
+  background: var(--mr-bg);
+  outline: none;
+}
+
+.mermaid-fs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--mr-border);
+  background: var(--mr-surface);
+}
+
+.mermaid-fs-toolbar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  height: 2.1rem;
+  padding: 0 0.5rem;
+  background: var(--mr-surface-elevated);
+  border: 1px solid var(--mr-border);
+  border-radius: var(--mr-radius-sm);
+  color: var(--mr-text);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.mermaid-fs-toolbar button:hover {
+  border-color: var(--mr-accent);
+  color: var(--mr-accent);
+}
+
+.mermaid-fs-zoom-level {
+  min-width: 3.6rem !important;
+}
+
+.mermaid-fs-close {
+  margin-left: 0.75rem;
+}
+
+.mermaid-fs-close:hover {
+  border-color: var(--mr-red) !important;
+  color: var(--mr-red) !important;
+}
+
+.mermaid-fs-viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  touch-action: none;
+}
+
+.mermaid-fs-viewport:active {
+  cursor: grabbing;
+}
+
+.mermaid-fs-canvas {
+  transform-origin: center center;
+}
+
+.mermaid-fs-canvas svg {
+  /* Explicit pixel width/height/max-width are set in JS from the SVG's own
+     viewBox (see mermaid-diagram.tsx) — a plain `auto` here can't resolve
+     since the canvas is itself auto-sized inside a centered flex container. */
+  display: block;
+}
+
+.mermaid-fs-hint {
+  text-align: center;
+  padding: 0.5rem;
+  margin: 0;
+  color: var(--mr-subtext);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  border-top: 1px solid var(--mr-border);
+  background: var(--mr-surface);
+}
+
+/* ═══════════════════════════════════════════════════════════════
    Images
    ═══════════════════════════════════════════════════════════════ */
 
