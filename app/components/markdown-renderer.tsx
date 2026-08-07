@@ -76,10 +76,11 @@ interface ComponentCtx {
 function buildComponents(ctx: ComponentCtx): Components {
   return {
     code(props) {
-      const { className, children, node, ...rest } = props;
+      const { className, children, inline, node, ...rest } = props;
       const match = /language-(\w+)/.exec(className ?? "");
       const lang = match?.[1] ?? "";
       const code = String(children ?? "").replace(/\n$/, "");
+      const isFencedBlock = !!match;
 
       if (lang === "chess") {
         return <ChessBoard yamlSource={code} fileConfig={ctx.chessConfig} />;
@@ -92,6 +93,14 @@ function buildComponents(ctx: ComponentCtx): Components {
               {children}
             </code>
           </pre>
+        );
+      }
+
+      if (!isFencedBlock) {
+        return (
+          <code {...rest} className={className}>
+            {children}
+          </code>
         );
       }
 

@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { Folder, FolderOpen, FileText } from "lucide-react";
 import type { NoteTreeEntry } from "@/app/lib/types";
 import CommandPalette from "@/app/components/command-palette";
 
@@ -21,28 +22,48 @@ export interface NoteLayoutProps {
 export function NoteLayout({ entries, children }: NoteLayoutProps) {
   return (
     <div className="flex min-h-screen">
-      <aside className="w-72 shrink-0 border-r border-border bg-muted/30 overflow-y-auto p-4 hidden md:flex md:flex-col gap-4">
+      {/* ── Sidebar ───────────────────────────────────────────────────── */}
+      <aside
+        className="w-72 shrink-0 overflow-y-auto hidden md:flex md:flex-col gap-6 p-5"
+        style={{
+          background: "var(--mr-surface)",
+          borderRight: "1px solid var(--mr-border)",
+        }}
+      >
         <div>
           <Link
             href="/"
-            className="block font-semibold text-foreground hover:text-primary"
+            className="sidebar-brand"
+            style={{ color: "var(--mr-text)" }}
           >
             Notes
           </Link>
         </div>
+
         <CommandPalette />
+
         <nav className="flex-1 overflow-y-auto">
           <NoteTree entries={entries} />
         </nav>
-        <div className="mt-auto pt-4 border-t border-border space-y-1">
+
+        <div
+          className="mt-auto pt-4 space-y-1"
+          style={{ borderTop: "1px solid var(--mr-border)" }}
+        >
           <SidebarLink href="/challenges">Challenges</SidebarLink>
           <SidebarLink href="/vulnerabilities">Vulnerabilities</SidebarLink>
           <SidebarLink href="/tags">Tags</SidebarLink>
         </div>
       </aside>
 
-      <main className="flex-1 min-w-0 p-6 lg:p-10 max-w-4xl mx-auto">
-        {children}
+      {/* ── Main ──────────────────────────────────────────────────────── */}
+      <main
+        className="flex-1 min-w-0 p-6 lg:p-10"
+        style={{ maxWidth: "calc(100vw - 288px)" }}
+      >
+        <div style={{ maxWidth: "var(--mr-max-width)", margin: "0 auto" }}>
+          {children}
+        </div>
       </main>
     </div>
   );
@@ -58,7 +79,20 @@ function SidebarLink({
   return (
     <Link
       href={href}
-      className="block text-sm text-muted-foreground hover:text-primary transition-colors"
+      className="block text-sm transition-colors"
+      style={{
+        color: "var(--mr-subtext)",
+        fontFamily: "var(--font-mono)",
+        fontSize: "0.78rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+      }}
+      onMouseEnter={(e) =>
+        ((e.currentTarget.style.color = "var(--mr-accent)"))
+      }
+      onMouseLeave={(e) =>
+        ((e.currentTarget.style.color = "var(--mr-subtext)"))
+      }
     >
       {children}
     </Link>
@@ -124,7 +158,14 @@ function TreeItem({ entry }: { entry: NoteTreeEntry }) {
           <button
             type="button"
             onClick={toggle}
-            className="w-4 h-4 flex items-center justify-center text-muted-foreground hover:text-foreground"
+            className="w-4 h-4 flex items-center justify-center transition-colors"
+            style={{ color: "var(--mr-subtext)" }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget.style.color = "var(--mr-text)"))
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget.style.color = "var(--mr-subtext)"))
+            }
             aria-label="Toggle"
           >
             <ChevronIcon open={open} />
@@ -134,14 +175,45 @@ function TreeItem({ entry }: { entry: NoteTreeEntry }) {
         )}
         <a
           href={entry.url}
-          className={`text-sm truncate ${
-            entry.is_active
-              ? "text-primary font-medium"
-              : "text-foreground hover:text-primary"
-          }`}
+          className="text-sm truncate flex items-center gap-1.5"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "0.8125rem",
+            color: entry.is_active ? "var(--mr-accent)" : "var(--mr-text)",
+          }}
+          onMouseEnter={(e) => {
+            if (!entry.is_active) {
+              e.currentTarget.style.color = "var(--mr-accent)";
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!entry.is_active) {
+              e.currentTarget.style.color = "var(--mr-text)";
+            }
+          }}
           title={entry.name}
         >
-          {entry.is_dir ? "📁 " : "📄 "}
+          {entry.is_dir ? (
+            open ? (
+              <FolderOpen
+                size={14}
+                style={{ opacity: 0.6, flexShrink: 0 }}
+                strokeWidth={1.8}
+              />
+            ) : (
+              <Folder
+                size={14}
+                style={{ opacity: 0.5, flexShrink: 0 }}
+                strokeWidth={1.8}
+              />
+            )
+          ) : (
+            <FileText
+              size={14}
+              style={{ opacity: 0.4, flexShrink: 0 }}
+              strokeWidth={1.8}
+            />
+          )}
           {entry.name}
         </a>
       </div>
@@ -151,7 +223,14 @@ function TreeItem({ entry }: { entry: NoteTreeEntry }) {
         </div>
       )}
       {open && loading && (
-        <div className="pl-4 mt-0.5 text-xs text-muted-foreground">
+        <div
+          className="pl-4 mt-0.5"
+          style={{
+            color: "var(--mr-subtext)",
+            fontSize: "0.6875rem",
+            fontFamily: "var(--font-mono)",
+          }}
+        >
           Loading…
         </div>
       )}

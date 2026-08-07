@@ -32,7 +32,7 @@ export default async function ChallengesPage() {
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
+      <article className="prose">
         <h1>Challenges</h1>
         {challenges.length === 0 ? (
           <p className="text-muted-foreground">

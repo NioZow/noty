@@ -12,7 +12,7 @@
  * @module config
  */
 
-import { existsSync, readFileSync } from "node:fs";
+import { statSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { load as loadYaml } from "js-yaml";
@@ -110,7 +110,6 @@ export function expandUser(inputPath: string): string {
 export function load(): MarkdownRenderConfig {
   let mtimeMs = 0;
   try {
-    const { statSync } = require("node:fs");
     mtimeMs = statSync(CONFIG_PATH).mtimeMs;
   } catch {
     // file doesn't exist — use defaults

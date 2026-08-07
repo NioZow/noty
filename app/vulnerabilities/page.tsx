@@ -32,7 +32,7 @@ export default async function VulnerabilitiesPage() {
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
+      <article className="prose">
         <h1>Vulnerabilities</h1>
         {vulns.length === 0 ? (
           <p className="text-muted-foreground">

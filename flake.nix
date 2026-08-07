@@ -1,5 +1,5 @@
 {
-  description = "markdown-render rewrite — Next.js 15 + Bun + Prisma development environment";
+  description = "Noty is note viewing app for markdown files";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -22,8 +22,7 @@
         # are provided by the pinned 6.x package, matching the `prisma@^6`
         # npm dependencies of this project.
         prisma-engines = pkgs.prisma-engines_6;
-
-        name = "markdown-render-rewrite";
+        name = "noty";
       in {
         devShells = {
           default = pkgs.mkShell {

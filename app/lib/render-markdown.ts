@@ -67,7 +67,15 @@ export interface RenderedNote {
 export async function renderNotePage(slug: string): Promise<RenderedNote> {
   const now = Date.now();
   const cached = _global._renderCache!.get(slug);
-  if (cached && now - cached.ts < _RENDER_CACHE_TTL) {
+
+  // Never use the render cache in dev mode — files change frequently and
+  // the watcher lives in a separate process so cache invalidation doesn't
+  // reach the Next.js server reliably.
+  if (
+    process.env.NODE_ENV !== "development" &&
+    cached &&
+    now - cached.ts < _RENDER_CACHE_TTL
+  ) {
     return cached.promise;
   }
 
@@ -117,7 +125,7 @@ async function _renderNotePageUncached(slug: string): Promise<RenderedNote> {
           day: "2-digit",
         });
 
-  const processedBody = preprocessMarkdown(body, path.dirname(filePath));
+  const processedBody = preprocessMarkdown(stripFirstH1(body), path.dirname(filePath));
   const backlinks = await getBacklinks(slug);
 
   return {
@@ -247,6 +255,11 @@ function resolveWikiLink(lookup: Map<string, string>, target: string): string | 
 export async function invalidateWikiCache(): Promise<void> {
   _global._wikiCache = null;
   _global._wikiCacheBuilding = false;
+}
+
+export function invalidateVulnCache(): void {
+  _global._vulnCache = null;
+  _global._vulnCacheBuilding = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -430,4 +443,8 @@ async function safeStat(filePath: string) {
   } catch {
     return null;
   }
+}
+
+function stripFirstH1(body: string): string {
+  return body.replace(/^#\s+.*\n?/m, "").trim();
 }

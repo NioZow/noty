@@ -115,3 +115,17 @@ function safeStatSync(filePath: string) {
     return null;
   }
 }
+
+// ---------------------------------------------------------------------------
+// Tag helpers (stubs — can be expanded to scan markdown frontmatter)
+// ---------------------------------------------------------------------------
+
+export async function collectAllTags(): Promise<string[]> {
+  // TODO: scan all .md frontmatter for tags
+  return [];
+}
+
+export async function findNotesByTag(tag: string): Promise<{ path: string; name: string }[]> {
+  // TODO: scan all .md frontmatter for given tag
+  return [];
+}

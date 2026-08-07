@@ -51,7 +51,7 @@ export default async function TagsPage() {
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
+      <article className="prose">
         <h1>Tags</h1>
         {sorted.length === 0 ? (
           <p className="text-muted-foreground">No tags found.</p>

@@ -22,6 +22,7 @@ import {
   TraverseError,
   buildNoteTree,
 } from "@/app/lib/file-resolver";
+import { notesDir } from "@/app/lib/config";
 import {
   isBinaryFile,
   isTextFile,
@@ -41,11 +42,23 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const relPath = slug?.join("/") ?? "";
   try {
-    const note = await renderNotePage(slug?.join("/") ?? "");
+    const filePath = await resolveNotePath(relPath);
+    if (!existsSync(filePath)) throw new Error("not found");
+    if (statSync(filePath).isDirectory()) {
+      const readmePath = path.join(filePath, "README.md");
+      if (existsSync(readmePath)) {
+        const root = path.resolve(notesDir());
+        const note = await renderNotePage(path.relative(root, readmePath));
+        return { title: note.title };
+      }
+      return { title: path.basename(filePath) };
+    }
+    const note = await renderNotePage(relPath);
     return { title: note.title };
   } catch {
-    return { title: "Markdown Render" };
+    return { title: slug?.join("/") ?? "Notes" };
   }
 }
 
@@ -82,7 +95,7 @@ export default async function CatchAllPage({ params }: PageProps) {
       const note = await renderNotePage(relPath);
       return (
         <NoteLayout entries={tree}>
-          <article className="prose prose-slate max-w-none">
+          <article className="prose">
             <h1>{note.title}</h1>
             <MetaBar meta={note.meta} date={note.date} />
             <MarkdownRenderer
@@ -113,9 +126,9 @@ export default async function CatchAllPage({ params }: PageProps) {
   if (await isBinaryFile(filePath)) {
     return (
       <NoteLayout entries={tree}>
-        <div className="p-4">
-          <h1 className="text-xl font-semibold mb-2">{path.basename(filePath)}</h1>
-          <p className="text-muted-foreground">
+        <div>
+          <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
+          <p style={{ color: "var(--mr-subtext)" }}>
             This file is binary and cannot be displayed in the browser.
           </p>
         </div>
@@ -129,8 +142,8 @@ export default async function CatchAllPage({ params }: PageProps) {
     const language = getLanguageForFile(filePath);
     return (
       <NoteLayout entries={tree}>
-        <div className="p-4">
-          <h1 className="text-xl font-semibold mb-4">{path.basename(filePath)}</h1>
+        <div>
+          <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
           <div className="code-block-wrapper">
             <div className="code-header">
               <span className="code-language">{language}</span>
@@ -147,9 +160,9 @@ export default async function CatchAllPage({ params }: PageProps) {
   // Fallback unsupported
   return (
     <NoteLayout entries={tree}>
-      <div className="p-4">
-        <h1 className="text-xl font-semibold mb-2">{path.basename(filePath)}</h1>
-        <p className="text-muted-foreground">Unsupported file type.</p>
+      <div>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
+        <p style={{ color: "var(--mr-subtext)" }}>Unsupported file type.</p>
       </div>
     </NoteLayout>
   );
@@ -197,7 +210,7 @@ async function DirectoryPage({ dirPath, relPath, tree }: { dirPath: string; relP
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
+      <article className="prose">
         <h1>{pageTitle}</h1>
         {readmeHtml && (
           <>

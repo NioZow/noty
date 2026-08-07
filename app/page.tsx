@@ -58,8 +58,7 @@ export default async function RootPage() {
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
-        <h1>{pageTitle}</h1>
+      <article className="prose">
         {readmeHtml && (
           <>
             <div className="meta-bar">

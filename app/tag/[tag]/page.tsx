@@ -65,7 +65,7 @@ export default async function TagPage({ params }: PageProps) {
 
   return (
     <NoteLayout entries={tree}>
-      <article className="prose prose-slate max-w-none">
+      <article className="prose">
         <h1>#{decoded}</h1>
 
         {noteMatches.length > 0 && (
