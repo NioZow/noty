@@ -13,6 +13,8 @@ export interface NoteLayoutProps {
   currentPath?: string;
   /** Main content area. */
   children: React.ReactNode;
+  /** Use a wider content column (for grid/card listing pages instead of prose). */
+  wide?: boolean;
 }
 
 const SIDEBAR_WIDTH = 288; // px, matches w-72
@@ -50,7 +52,7 @@ function closestMermaidExpandButton(): HTMLButtonElement | null {
  * folded away via the toggle button on its edge; the collapsed state is
  * remembered across page loads.
  */
-export function NoteLayout({ entries, currentPath = "", children }: NoteLayoutProps) {
+export function NoteLayout({ entries, currentPath = "", children, wide = false }: NoteLayoutProps) {
   const [collapsed, setCollapsed] = React.useState(false);
 
   React.useEffect(() => {
@@ -92,10 +94,17 @@ export function NoteLayout({ entries, currentPath = "", children }: NoteLayoutPr
         style={{ maxWidth: `calc(100vw - ${collapsed ? 0 : SIDEBAR_WIDTH}px)` }}
       >
         <div
-          style={{
-            maxWidth: "var(--mr-max-width)",
-            marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
-          }}
+          style={
+            wide
+              ? {
+                  maxWidth: "var(--mr-max-width-wide)",
+                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width-wide)) / 2))",
+                }
+              : {
+                  maxWidth: "var(--mr-max-width)",
+                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
+                }
+          }
         >
           {children}
         </div>
