@@ -5,20 +5,29 @@ import Link from "next/link";
 import { ChevronLeft, ChevronRight, Folder, FolderOpen, FileText } from "lucide-react";
 import type { NoteTreeEntry } from "@/app/lib/types";
 import CommandPalette from "@/app/components/command-palette";
+import { DocSidebar } from "@/app/components/doc-sidebar";
 
 export interface NoteLayoutProps {
   /** Sidebar tree entries (root-level only, lazily expanded). */
   entries: NoteTreeEntry[];
   /** Relative path of the page currently shown, used to auto-expand the sidebar to it. */
   currentPath?: string;
+  /**
+   * Folder (relative to the notes root, no leading/trailing slash) that
+   * scopes the right sidebar's "nearby" vulnerabilities/challenges panel.
+   * Includes sub-folders recursively. Defaults to root (everything).
+   */
+  currentFolder?: string;
   /** Main content area. */
   children: React.ReactNode;
   /** Use a wider content column (for grid/card listing pages instead of prose). */
   wide?: boolean;
 }
 
-const SIDEBAR_WIDTH = 288; // px, matches w-72
-const SIDEBAR_COLLAPSED_KEY = "mr-sidebar-collapsed";
+const LEFT_SIDEBAR_WIDTH = 288; // px, matches w-72
+const RIGHT_SIDEBAR_WIDTH = 288;
+const LEFT_SIDEBAR_COLLAPSED_KEY = "mr-sidebar-collapsed";
+const RIGHT_SIDEBAR_COLLAPSED_KEY = "mr-toc-sidebar-collapsed";
 
 /**
  * Find the expand button of the mermaid diagram vertically closest to the
@@ -52,17 +61,33 @@ function closestMermaidExpandButton(): HTMLButtonElement | null {
  * folded away via the toggle button on its edge; the collapsed state is
  * remembered across page loads.
  */
-export function NoteLayout({ entries, currentPath = "", children, wide = false }: NoteLayoutProps) {
-  const [collapsed, setCollapsed] = React.useState(false);
+export function NoteLayout({
+  entries,
+  currentPath = "",
+  currentFolder = "",
+  children,
+  wide = false,
+}: NoteLayoutProps) {
+  const [leftCollapsed, setLeftCollapsed] = React.useState(false);
+  const [rightCollapsed, setRightCollapsed] = React.useState(false);
 
   React.useEffect(() => {
-    setCollapsed(window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+    setLeftCollapsed(window.localStorage.getItem(LEFT_SIDEBAR_COLLAPSED_KEY) === "1");
+    setRightCollapsed(window.localStorage.getItem(RIGHT_SIDEBAR_COLLAPSED_KEY) === "1");
   }, []);
 
-  const toggleCollapsed = React.useCallback(() => {
-    setCollapsed((prev) => {
+  const toggleLeftCollapsed = React.useCallback(() => {
+    setLeftCollapsed((prev) => {
       const next = !prev;
-      window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      window.localStorage.setItem(LEFT_SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  }, []);
+
+  const toggleRightCollapsed = React.useCallback(() => {
+    setRightCollapsed((prev) => {
+      const next = !prev;
+      window.localStorage.setItem(RIGHT_SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
       return next;
     });
   }, []);
@@ -71,7 +96,7 @@ export function NoteLayout({ entries, currentPath = "", children, wide = false }
     function handleKey(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "e") {
         e.preventDefault();
-        toggleCollapsed();
+        toggleLeftCollapsed();
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
@@ -84,66 +109,23 @@ export function NoteLayout({ entries, currentPath = "", children, wide = false }
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [toggleCollapsed]);
+  }, [toggleLeftCollapsed]);
 
   return (
     <div className="flex min-h-screen">
-      {/* ── Main ──────────────────────────────────────────────────────── */}
-      <main
-        className="flex-1 min-w-0 p-6 lg:p-10"
-        style={{ maxWidth: `calc(100vw - ${collapsed ? 0 : SIDEBAR_WIDTH}px)` }}
-      >
-        <div
-          style={
-            wide
-              ? {
-                  maxWidth: "var(--mr-max-width-wide)",
-                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width-wide)) / 2))",
-                }
-              : {
-                  maxWidth: "var(--mr-max-width)",
-                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
-                }
-          }
-        >
-          {children}
-        </div>
-      </main>
-
-      {/* ── Sidebar fold toggle ──────────────────────────────────────── */}
-      <button
-        type="button"
-        onClick={toggleCollapsed}
-        aria-label={collapsed ? "Show sidebar" : "Hide sidebar"}
-        title={`${collapsed ? "Show" : "Hide"} sidebar (⌘E)`}
-        className="hidden md:flex fixed top-1/2 z-10 h-8 w-5 items-center justify-center rounded-l transition-[right] duration-200"
-        style={{
-          right: collapsed ? 0 : SIDEBAR_WIDTH,
-          transform: "translateY(-50%)",
-          background: "var(--mr-surface)",
-          border: "1px solid var(--mr-border)",
-          borderRight: "none",
-          color: "var(--mr-subtext)",
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--mr-accent)")}
-        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--mr-subtext)")}
-      >
-        {collapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
-      </button>
-
-      {/* ── Sidebar ───────────────────────────────────────────────────── */}
+      {/* ── Left sidebar: note tree ──────────────────────────────────── */}
       <aside
         className="shrink-0 hidden md:block overflow-hidden sticky top-0 self-start transition-[width] duration-200"
         style={{
-          width: collapsed ? 0 : SIDEBAR_WIDTH,
+          width: leftCollapsed ? 0 : LEFT_SIDEBAR_WIDTH,
           height: "100vh",
           background: "var(--mr-surface)",
-          borderLeft: collapsed ? "none" : "1px solid var(--mr-border)",
+          borderRight: leftCollapsed ? "none" : "1px solid var(--mr-border)",
         }}
       >
         <div
           className="flex flex-col gap-6 p-5 h-full overflow-y-auto"
-          style={{ width: SIDEBAR_WIDTH }}
+          style={{ width: LEFT_SIDEBAR_WIDTH }}
         >
           <div>
             <Link
@@ -169,6 +151,93 @@ export function NoteLayout({ entries, currentPath = "", children, wide = false }
             <SidebarLink href="/vulnerabilities">Vulnerabilities</SidebarLink>
             <SidebarLink href="/tags">Tags</SidebarLink>
           </div>
+        </div>
+      </aside>
+
+      {/* ── Left sidebar fold toggle ─────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={toggleLeftCollapsed}
+        aria-label={leftCollapsed ? "Show sidebar" : "Hide sidebar"}
+        title={`${leftCollapsed ? "Show" : "Hide"} sidebar (⌘E)`}
+        className="hidden md:flex fixed top-1/2 z-10 h-8 w-5 items-center justify-center rounded-r transition-[left] duration-200"
+        style={{
+          left: leftCollapsed ? 0 : LEFT_SIDEBAR_WIDTH,
+          transform: "translateY(-50%)",
+          background: "var(--mr-surface)",
+          border: "1px solid var(--mr-border)",
+          borderLeft: "none",
+          color: "var(--mr-subtext)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--mr-accent)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--mr-subtext)")}
+      >
+        {leftCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+      </button>
+
+      {/* ── Main ──────────────────────────────────────────────────────── */}
+      <main
+        className="mr-layout-main flex-1 min-w-0 p-6 lg:p-10"
+        style={
+          {
+            "--mr-left-w": `${leftCollapsed ? 0 : LEFT_SIDEBAR_WIDTH}px`,
+            "--mr-right-w": `${rightCollapsed ? 0 : RIGHT_SIDEBAR_WIDTH}px`,
+          } as React.CSSProperties
+        }
+      >
+        <div
+          style={
+            wide
+              ? {
+                  maxWidth: "var(--mr-max-width-wide)",
+                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width-wide)) / 2))",
+                }
+              : {
+                  maxWidth: "var(--mr-max-width)",
+                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
+                }
+          }
+        >
+          {children}
+        </div>
+      </main>
+
+      {/* ── Right sidebar fold toggle ────────────────────────────────── */}
+      <button
+        type="button"
+        onClick={toggleRightCollapsed}
+        aria-label={rightCollapsed ? "Show outline" : "Hide outline"}
+        title={`${rightCollapsed ? "Show" : "Hide"} outline`}
+        className="hidden lg:flex fixed top-1/2 z-10 h-8 w-5 items-center justify-center rounded-l transition-[right] duration-200"
+        style={{
+          right: rightCollapsed ? 0 : RIGHT_SIDEBAR_WIDTH,
+          transform: "translateY(-50%)",
+          background: "var(--mr-surface)",
+          border: "1px solid var(--mr-border)",
+          borderRight: "none",
+          color: "var(--mr-subtext)",
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.color = "var(--mr-accent)")}
+        onMouseLeave={(e) => (e.currentTarget.style.color = "var(--mr-subtext)")}
+      >
+        {rightCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+      </button>
+
+      {/* ── Right sidebar: outline + nearby vulns/challenges ─────────── */}
+      <aside
+        className="shrink-0 hidden lg:block overflow-hidden sticky top-0 self-start transition-[width] duration-200"
+        style={{
+          width: rightCollapsed ? 0 : RIGHT_SIDEBAR_WIDTH,
+          height: "100vh",
+          background: "var(--mr-surface)",
+          borderLeft: rightCollapsed ? "none" : "1px solid var(--mr-border)",
+        }}
+      >
+        <div
+          className="h-full overflow-y-auto"
+          style={{ width: RIGHT_SIDEBAR_WIDTH }}
+        >
+          <DocSidebar currentFolder={currentFolder} />
         </div>
       </aside>
     </div>

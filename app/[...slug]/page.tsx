@@ -83,6 +83,7 @@ export default async function CatchAllPage({ params }: PageProps) {
   const st = statSync(filePath);
 
   const tree = buildNoteTree(relPath);
+  const currentFolder = folderOf(relPath);
 
   // ── Directory ──────────────────────────────────────────────────────────
   if (st.isDirectory()) {
@@ -94,7 +95,7 @@ export default async function CatchAllPage({ params }: PageProps) {
     try {
       const note = await renderNotePage(relPath);
       return (
-        <NoteLayout entries={tree} currentPath={relPath}>
+        <NoteLayout entries={tree} currentPath={relPath} currentFolder={currentFolder}>
           <article className="prose">
             <h1>{note.title}</h1>
             <MetaBar meta={note.meta} date={note.date} />
@@ -125,7 +126,7 @@ export default async function CatchAllPage({ params }: PageProps) {
   // ── Binary file ────────────────────────────────────────────────────────
   if (await isBinaryFile(filePath)) {
     return (
-      <NoteLayout entries={tree} currentPath={relPath}>
+      <NoteLayout entries={tree} currentPath={relPath} currentFolder={currentFolder}>
         <div>
           <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
           <p style={{ color: "var(--mr-subtext)" }}>
@@ -141,7 +142,7 @@ export default async function CatchAllPage({ params }: PageProps) {
     const content = await readFile(filePath, "utf-8");
     const language = getLanguageForFile(filePath);
     return (
-      <NoteLayout entries={tree} currentPath={relPath}>
+      <NoteLayout entries={tree} currentPath={relPath} currentFolder={currentFolder}>
         <div>
           <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
           <div className="code-block-wrapper">
@@ -159,7 +160,7 @@ export default async function CatchAllPage({ params }: PageProps) {
 
   // Fallback unsupported
   return (
-    <NoteLayout entries={tree} currentPath={relPath}>
+    <NoteLayout entries={tree} currentPath={relPath} currentFolder={currentFolder}>
       <div>
         <h1 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem", color: "var(--mr-text-bright)" }}>{path.basename(filePath)}</h1>
         <p style={{ color: "var(--mr-subtext)" }}>Unsupported file type.</p>
@@ -209,7 +210,7 @@ async function DirectoryPage({ dirPath, relPath, tree }: { dirPath: string; relP
   }
 
   return (
-    <NoteLayout entries={tree} currentPath={relPath}>
+    <NoteLayout entries={tree} currentPath={relPath} currentFolder={relPath}>
       <article className="prose">
         <h1>{pageTitle}</h1>
         {readmeHtml && (
@@ -326,6 +327,12 @@ function BacklinksSection({
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/** Parent folder of a "/"-joined relative path, or "" if it's already top-level. */
+function folderOf(relPath: string): string {
+  const idx = relPath.lastIndexOf("/");
+  return idx === -1 ? "" : relPath.slice(0, idx);
+}
 
 function guessImageContentType(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();

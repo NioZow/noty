@@ -17,6 +17,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
 import rehypeRaw from "rehype-raw";
+import rehypeSlug from "rehype-slug";
 import type { Components } from "react-markdown";
 import type { ReactNode } from "react";
 
@@ -57,7 +58,7 @@ export function MarkdownRenderer({ source, chessConfig, docPath }: MarkdownRende
   return (
     <ReactMarkdown
       remarkPlugins={[remarkGfm, remarkMath]}
-      rehypePlugins={[rehypeKatex, rehypeRaw]}
+      rehypePlugins={[rehypeRaw, rehypeSlug, rehypeKatex]}
       components={buildComponents({ chessConfig, docPath })}
     >
       {source}
