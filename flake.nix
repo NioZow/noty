@@ -14,6 +14,7 @@
     flake-utils.lib.eachDefaultSystem (
       system: let
         pkgs = nixpkgs.legacyPackages.${system};
+        lib = pkgs.lib;
 
         # the default `prisma-engines` package tracks Prisma 7, which removed
         # the classic Rust query engine and only ships `schema-engine`.
@@ -23,7 +24,119 @@
         # npm dependencies of this project.
         prisma-engines = pkgs.prisma-engines_6;
         name = "noty";
+        version = "0.1.0";
+
+        prismaEnv = {
+          PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
+          PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
+          PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
+        };
+
+        # narrow source used just to resolve dependencies, so edits to app
+        # code don't bust the (network-fetching) deps cache
+        depsSrc = lib.fileset.toSource {
+          root = ./.;
+          fileset = lib.fileset.unions [./package.json ./bun.lock ./prisma/schema.prisma];
+        };
+
+        # `bun install` needs network access to hit the npm registry, which
+        # the nix build sandbox otherwise blocks — fetching node_modules has
+        # to happen in a fixed-output derivation, whose result is verified
+        # against outputHash instead of being sandboxed from the network.
+        nodeModules = pkgs.stdenvNoCC.mkDerivation {
+          pname = "${name}-node-modules";
+          inherit version;
+          src = depsSrc;
+
+          nativeBuildInputs = [pkgs.bun];
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME="$TMPDIR"
+            # scripts (incl. `prisma generate`) run later, offline, once the
+            # nix-provided engines are on PATH via prismaEnv
+            bun install --frozen-lockfile --ignore-scripts
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p "$out"
+            cp -r node_modules "$out/node_modules"
+            runHook postInstall
+          '';
+
+          dontFixup = true;
+
+          outputHashMode = "recursive";
+          outputHashAlgo = "sha256";
+          outputHash = "sha256-awObgAFwizZ0obm2w7iuwGGoNlqbuXf7n5Eohk23WzM=";
+        };
+
+        noty = pkgs.stdenvNoCC.mkDerivation {
+          pname = name;
+          inherit version;
+          # whole flake source (git-tracked + untracked-but-not-gitignored
+          # files); node_modules/.next/etc are excluded via .gitignore
+          src = self;
+
+          nativeBuildInputs = [pkgs.bun prisma-engines pkgs.prisma];
+
+          env =
+            prismaEnv
+            // {
+              NEXT_TELEMETRY_DISABLED = "1";
+            };
+
+          buildPhase = ''
+            runHook preBuild
+            export HOME="$TMPDIR"
+
+            cp -r ${nodeModules}/node_modules .
+            chmod -R u+w node_modules
+
+            echo "DEBUG: about to run prisma generate" >> "$TMPDIR/debug.log"
+            script -qefc "bunx prisma generate" "$TMPDIR/debug.log" 2>&1
+            echo "DEBUG: prisma generate exited $?" >> "$TMPDIR/debug.log"
+            script -qefc "bun run build" "$TMPDIR/debug2.log" 2>&1
+            echo "DEBUG: bun run build exited $?" >> "$TMPDIR/debug.log"
+
+            runHook postBuild
+          '';
+
+          installPhase = ''
+            runHook preInstall
+
+            mkdir -p "$out/app"
+            cp -r .next node_modules public prisma package.json bun.lock next.config.ts "$out/app/"
+
+            mkdir -p "$out/bin"
+            cat > "$out/bin/${name}" <<EOF
+            #!/usr/bin/env bash
+            set -euo pipefail
+            cd "$out/app"
+            export NODE_ENV=production
+            export DATABASE_URL="\''${DATABASE_URL:-file:\$HOME/.cache/markdown-render/challenges.db}"
+            exec ${pkgs.bun}/bin/bun run start "\$@"
+            EOF
+            chmod +x "$out/bin/${name}"
+
+            runHook postInstall
+          '';
+
+          dontFixup = true;
+        };
       in {
+        packages = {
+          default = noty;
+          inherit noty nodeModules;
+        };
+
+        apps.default = {
+          type = "app";
+          program = "${noty}/bin/${name}";
+        };
+
         devShells = {
           default = pkgs.mkShell {
             inherit name;
@@ -38,13 +151,7 @@
               pkgs.prisma
             ];
 
-            env = {
-              # point the Prisma CLI and client at the nix-provided engines
-              # instead of downloading platform binaries at install time
-              PRISMA_SCHEMA_ENGINE_BINARY = "${prisma-engines}/bin/schema-engine";
-              PRISMA_QUERY_ENGINE_BINARY = "${prisma-engines}/bin/query-engine";
-              PRISMA_QUERY_ENGINE_LIBRARY = "${prisma-engines}/lib/libquery_engine.node";
-            };
+            env = prismaEnv;
 
             shellHook = ''
               export name="${name}"

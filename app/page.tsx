@@ -52,10 +52,6 @@ export default async function RootPage() {
 
   const entries = listDirectory(root, root);
 
-  const pageTitle = readmeMeta.title
-    ? String(readmeMeta.title)
-    : "Notes";
-
   return (
     <NoteLayout entries={tree}>
       <article className="prose">

@@ -9,7 +9,7 @@
  * @module mcp-tools
  */
 
-import { existsSync, readdirSync, statSync, lstatSync } from "node:fs";
+import { existsSync, readdirSync, lstatSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { unified } from "unified";
@@ -18,7 +18,7 @@ import remarkRehype from "remark-rehype";
 import rehypeSanitize from "rehype-sanitize";
 import rehypeStringify from "rehype-stringify";
 import { notesDir } from "../config";
-import { isBinaryFile, isTextFile } from "../file-utils";
+import { isBinaryFile } from "../file-utils";
 import { extractFrontmatter } from "../markdown-utils";
 import { getBacklinks } from "../backlinks";
 import { prisma } from "../prisma";

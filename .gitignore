@@ -4,6 +4,9 @@
 /node_modules
 /.pnp
 .pnp.*
+# this project uses bun (bun.lock) — an npm lockfile confuses next build's
+# lockfile-patcher into shelling out to a nonexistent npm binary
+package-lock.json
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -40,3 +43,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .direnv/
+
+.claude

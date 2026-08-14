@@ -4,8 +4,8 @@
  * @module file-resolver
  */
 
-import { existsSync, readdirSync, lstatSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
+import { readdirSync, lstatSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { notesDir } from "./config";
 import type { NoteTreeEntry } from "./types";
@@ -125,6 +125,7 @@ export async function collectAllTags(): Promise<string[]> {
   return [];
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function findNotesByTag(tag: string): Promise<{ path: string; name: string }[]> {
   // TODO: scan all .md frontmatter for given tag
   return [];

@@ -17,7 +17,6 @@ import { resolveNotePath, TraverseError } from "./file-resolver";
 import { getBacklinks } from "./backlinks";
 import { FEAT_WIKI_LINKS, FEAT_VULN_LINKS } from "./features";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 interface GlobalRenderMarkdownCache {
   _renderCache?: Map<string, { slug: string; promise: Promise<RenderedNote>; ts: number }>;
   _wikiCache?: { root: string; lookup: Map<string, string>; ts: number } | null;
@@ -26,7 +25,6 @@ interface GlobalRenderMarkdownCache {
   _vulnCacheBuilding?: boolean;
 }
 const _global = globalThis as unknown as GlobalRenderMarkdownCache;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 if (!_global._renderCache) {
   _global._renderCache = new Map();
@@ -105,6 +103,7 @@ async function _renderNotePageUncached(slug: string): Promise<RenderedNote> {
   const chessConfig = (meta.chess_board as Record<string, unknown> | undefined) ?? undefined;
   let cleanedMeta = meta;
   if ("chess_board" in cleanedMeta) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- strip chess_board out via destructuring
     const { chess_board: _, ...rest } = cleanedMeta;
     cleanedMeta = rest;
   }

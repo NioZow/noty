@@ -78,6 +78,7 @@ interface ComponentCtx {
 function buildComponents(ctx: ComponentCtx): Components {
   return {
     code(props) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars -- omit `node` from the rest spread onto the DOM element
       const { className, children, node, ...rest } = props;
       const match = /language-(\w+)/.exec(className ?? "");
       const lang = match?.[1] ?? "";
@@ -206,7 +207,6 @@ function buildComponents(ctx: ComponentCtx): Components {
       return <a href={href} className={className} {...rest}>{children}</a>;
     },
 
-    // eslint-disable-next-line @next/next/no-img-element
     img(props) {
       const { src, alt, className, ...rest } = props;
       const color = (rest as Record<string, unknown>)["data-bg"] as string | undefined;

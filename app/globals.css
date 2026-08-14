@@ -1297,6 +1297,9 @@ a.vuln-link:hover {
 
 .mr-layout-main {
   max-width: calc(100vw - var(--mr-left-w, 0px) - var(--mr-right-w, 0px));
+  /* Mirrors the p-6/lg:p-10 padding below so the centering calc can cancel
+     it out — otherwise the centered column drifts right by that padding. */
+  --mr-main-pad: 24px;
 }
 
 @media (max-width: 767px) {
@@ -1308,6 +1311,12 @@ a.vuln-link:hover {
 @media (min-width: 768px) and (max-width: 1023px) {
   .mr-layout-main {
     max-width: calc(100vw - var(--mr-left-w, 0px));
+  }
+}
+
+@media (min-width: 1024px) {
+  .mr-layout-main {
+    --mr-main-pad: 40px;
   }
 }
 

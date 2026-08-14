@@ -57,7 +57,7 @@ export default async function TagsPage() {
           <p className="text-muted-foreground">No tags found.</p>
         ) : (
           <div className="flex flex-wrap gap-2 mt-6">
-            {sorted.map(([tag, info]) => (
+            {sorted.map(([tag]) => (
               <a key={tag} href={`/tag/${encodeURIComponent(tag)}`}>
                 <Badge variant="secondary" className="text-sm cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
                   #{tag}

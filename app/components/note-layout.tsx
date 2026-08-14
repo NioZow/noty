@@ -99,6 +99,11 @@ export function NoteLayout({
         toggleLeftCollapsed();
         return;
       }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        toggleRightCollapsed();
+        return;
+      }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "f") {
         const expandBtn = closestMermaidExpandButton();
         if (expandBtn) {
@@ -109,7 +114,7 @@ export function NoteLayout({
     }
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [toggleLeftCollapsed]);
+  }, [toggleLeftCollapsed, toggleRightCollapsed]);
 
   return (
     <div className="flex min-h-screen">
@@ -190,11 +195,13 @@ export function NoteLayout({
             wide
               ? {
                   maxWidth: "var(--mr-max-width-wide)",
-                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width-wide)) / 2))",
+                  marginLeft:
+                    "max(0px, calc((100vw - var(--mr-left-w, 0px) - var(--mr-max-width-wide)) / 2 - var(--mr-main-pad, 24px)))",
                 }
               : {
                   maxWidth: "var(--mr-max-width)",
-                  marginLeft: "max(0px, calc((100vw - var(--mr-max-width)) / 2))",
+                  marginLeft:
+                    "max(0px, calc((100vw - var(--mr-left-w, 0px) - var(--mr-max-width)) / 2 - var(--mr-main-pad, 24px)))",
                 }
           }
         >
@@ -207,7 +214,7 @@ export function NoteLayout({
         type="button"
         onClick={toggleRightCollapsed}
         aria-label={rightCollapsed ? "Show outline" : "Hide outline"}
-        title={`${rightCollapsed ? "Show" : "Hide"} outline`}
+        title={`${rightCollapsed ? "Show" : "Hide"} outline (⌘V)`}
         className="hidden lg:flex fixed top-1/2 z-10 h-8 w-5 items-center justify-center rounded-l transition-[right] duration-200"
         style={{
           right: rightCollapsed ? 0 : RIGHT_SIDEBAR_WIDTH,

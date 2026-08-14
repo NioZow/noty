@@ -51,13 +51,11 @@ export interface MarkdownRenderConfig {
   mcp_enabled: boolean;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 interface GlobalCache {
   config?: { value: MarkdownRenderConfig; mtimeMs: number };
 }
 
 const _global = globalThis as unknown as GlobalCache;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Build the default configuration (fresh objects on every call, like the

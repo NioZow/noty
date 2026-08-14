@@ -379,7 +379,6 @@ function parseBlock(source: string): Record<string, unknown> {
 function boardFromData(data: Record<string, unknown>): Chess {
   const pgn = data.pgn;
   if (typeof pgn === "string") {
-    const game = new Chess();
     // chess.js accepts PGN via .load_pgn() but we need to extract the final position
     const lines = pgn.split("\n");
     const movesLine = lines

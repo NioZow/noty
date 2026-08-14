@@ -34,14 +34,12 @@ interface CacheEntry {
   index: Map<string, Backlink[]>;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 interface GlobalBacklinksCache {
   __backlinks_cache?: Map<string, CacheEntry>;
   __backlinks_building?: boolean;
   __backlinks_buildPromise?: Promise<void> | null;
 }
 const _global = globalThis as unknown as GlobalBacklinksCache;
-/* eslint-enable @typescript-eslint/no-explicit-any */
 
 if (!_global.__backlinks_cache) {
   _global.__backlinks_cache = new Map();
@@ -181,7 +179,6 @@ async function _buildIndex(root: string): Promise<Map<string, Backlink[]>> {
   return index;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function _findNote(root: string, target: string): Promise<string | undefined> {
   const t = target.toLowerCase().trim();
   const slug = _slugify(t);
