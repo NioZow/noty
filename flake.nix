@@ -80,7 +80,10 @@
           # files); node_modules/.next/etc are excluded via .gitignore
           src = self;
 
-          nativeBuildInputs = [pkgs.bun prisma-engines pkgs.prisma];
+          # nodejs_24 is needed so `patchShebangs` below can rewrite the
+          # `#!/usr/bin/env node` shebangs in node_modules/.bin/* to a real
+          # store path — the build sandbox has no /usr/bin/env
+          nativeBuildInputs = [pkgs.bun pkgs.nodejs_24 prisma-engines pkgs.prisma];
 
           env =
             prismaEnv
@@ -94,12 +97,10 @@
 
             cp -r ${nodeModules}/node_modules .
             chmod -R u+w node_modules
+            patchShebangs node_modules
 
-            echo "DEBUG: about to run prisma generate" >> "$TMPDIR/debug.log"
-            script -qefc "bunx prisma generate" "$TMPDIR/debug.log" 2>&1
-            echo "DEBUG: prisma generate exited $?" >> "$TMPDIR/debug.log"
-            script -qefc "bun run build" "$TMPDIR/debug2.log" 2>&1
-            echo "DEBUG: bun run build exited $?" >> "$TMPDIR/debug.log"
+            node_modules/.bin/prisma generate
+            bun run build
 
             runHook postBuild
           '';
