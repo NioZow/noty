@@ -127,12 +127,6 @@ in {
       default = false;
       description = "Whether to open {option}`services.noty.port` in the firewall.";
     };
-
-    environment = lib.mkOption {
-      type = lib.types.attrsOf lib.types.str;
-      default = { };
-      description = "Extra environment variables passed to the noty systemd service.";
-    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -159,7 +153,7 @@ in {
         PRISMA_SCHEMA_ENGINE_BINARY = "${prismaEngines}/bin/schema-engine";
         PRISMA_QUERY_ENGINE_BINARY = "${prismaEngines}/bin/query-engine";
         PRISMA_QUERY_ENGINE_LIBRARY = "${prismaEngines}/lib/libquery_engine.node";
-      } // cfg.environment;
+      };
 
       serviceConfig = {
         Type = "simple";

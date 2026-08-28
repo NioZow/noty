@@ -187,4 +187,3 @@ same settings above:
 | `port` | port | `3000` |
 | `host` | string | `127.0.0.1` |
 | `openFirewall` | bool | `false` |
-| `environment` | attrsOf str | `{}` |
