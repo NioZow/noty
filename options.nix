@@ -8,27 +8,25 @@ let
   cfg = config.services.noty;
   system = pkgs.stdenv.hostPlatform.system;
 
+  yamlFormat = pkgs.formats.yaml {};
+
   # prisma-engines_6 matches the `prisma@^6` npm dependency this project is
   # pinned to — the migrate-deploy step below needs the schema-engine binary at
   # runtime, the same way the flake's own build/devShell wire it up.
   prismaEngines = pkgs.prisma-engines_6;
 
-  # JSON is a valid subset of YAML, so this can be handed straight to
-  # app/lib/config.ts's `js-yaml` loader without a templating step.
-  configFile = pkgs.writeText "noty-config.yml" (
-    builtins.toJSON {
-      notes_dir = cfg.notesDir;
-      challenges_root = if cfg.challengesRoot == null then "" else cfg.challengesRoot;
-      challenges_db_path = cfg.challengesDbPath;
-      chess_board = {
-        theme = cfg.chessBoard.theme;
-        colors = cfg.chessBoard.colors;
-        pieces_dir = if cfg.chessBoard.piecesDir == null then "" else cfg.chessBoard.piecesDir;
-      };
-      templates_search_dirs = cfg.templatesSearchDirs;
-      mcp_enabled = cfg.mcpEnabled;
-    }
-  );
+  configFile = yamlFormat.generate "noty-config.yml" {
+    notes_dir = cfg.notesDir;
+    challenges_root = if cfg.challengesRoot == null then "" else cfg.challengesRoot;
+    challenges_db_path = cfg.challengesDbPath;
+    chess_board = {
+      theme = cfg.chessBoard.theme;
+      colors = cfg.chessBoard.colors;
+      pieces_dir = if cfg.chessBoard.piecesDir == null then "" else cfg.chessBoard.piecesDir;
+    };
+    templates_search_dirs = cfg.templatesSearchDirs;
+    mcp_enabled = cfg.mcpEnabled;
+  };
 in {
   options.services.noty = {
     enable = lib.mkEnableOption "Noty, a markdown note viewer";
