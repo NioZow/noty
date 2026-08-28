@@ -13,9 +13,22 @@
 
 import React from "react";
 import { Chessboard } from "react-chessboard";
-import type { Arrow } from "react-chessboard";
+import type { Arrow, PieceRenderObject } from "react-chessboard";
 import { Chess, validateFen } from "chess.js";
 import { load as loadYaml } from "js-yaml";
+
+import neoBB from "@/public/chess/pieces/neo/bB.svg";
+import neoBK from "@/public/chess/pieces/neo/bK.svg";
+import neoBN from "@/public/chess/pieces/neo/bN.svg";
+import neoBP from "@/public/chess/pieces/neo/bP.svg";
+import neoBQ from "@/public/chess/pieces/neo/bQ.svg";
+import neoBR from "@/public/chess/pieces/neo/bR.svg";
+import neoWB from "@/public/chess/pieces/neo/wB.svg";
+import neoWK from "@/public/chess/pieces/neo/wK.svg";
+import neoWN from "@/public/chess/pieces/neo/wN.svg";
+import neoWP from "@/public/chess/pieces/neo/wP.svg";
+import neoWQ from "@/public/chess/pieces/neo/wQ.svg";
+import neoWR from "@/public/chess/pieces/neo/wR.svg";
 
 // ---------------------------------------------------------------------------
 // Themes
@@ -60,6 +73,76 @@ const THEMES: Record<string, BoardColors> = {
 };
 
 const DEFAULT_THEME = "classic";
+
+/**
+ * React-chessboard piece identifiers. The order here doesn't matter; each key
+ * is a `<color><type>` pair (e.g. `wK` = white king).
+ */
+const PIECE_KEYS = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"] as const;
+
+/**
+ * A `<color><type>` -> bundled SVG asset map for a single theme. Follows the
+ * convention `{W}K` for white king etc., next to the `react-chessboard` keys.
+ */
+type ThemePieces = Partial<Record<(typeof PIECE_KEYS)[number], string>>;
+
+/**
+ * SVG piece assets bundled from `chess/pieces/neo/`. Statically imported so
+ * Next.JS copies them into the build and returns stable public URLs.
+ */
+const NEO_PIECES: ThemePieces = {
+  wP: neoWP,
+  wN: neoWN,
+  wB: neoWB,
+  wR: neoWR,
+  wQ: neoWQ,
+  wK: neoWK,
+  bP: neoBP,
+  bN: neoBN,
+  bB: neoBB,
+  bR: neoBR,
+  bQ: neoBQ,
+  bK: neoBK,
+};
+
+/**
+ * Themes that ship custom SVG piece assets. Add any new theme directory (e.g.
+ * `chess/pieces/<theme>/`) here to have its pieces used automatically.
+ */
+const CUSTOM_PIECE_THEMES: Readonly<Record<string, ThemePieces>> = {
+  neo: NEO_PIECES,
+};
+
+/**
+ * Build a `pieces` prop for `react-chessboard` from a theme's SVG assets.
+ * Returns `undefined` for themes without custom assets so react-chessboard's
+ * built-in pieces are used (never renders empty squares).
+ */
+function buildThemePieces(theme: string): PieceRenderObject | undefined {
+  const assets = CUSTOM_PIECE_THEMES[theme];
+  if (!assets) return undefined;
+
+  const pieces: PieceRenderObject = {};
+  for (const key of PIECE_KEYS) {
+    const url = assets[key];
+    if (url) {
+      pieces[key] = (props) => (
+        <img
+          src={url}
+          alt={key}
+          draggable={false}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain",
+            ...props?.svgStyle,
+          }}
+        />
+      );
+    }
+  }
+  return pieces;
+}
 
 /**
  * Construct a Chess instance from a FEN that may describe a diagram-only
@@ -125,6 +208,8 @@ export function ChessBoard({ yamlSource, fileConfig }: ChessBoardProps) {
 
     const globalConfig: Record<string, unknown> = {}; // TODO: wire to config.ts in a server/client-safe way
     const colors = resolveColors(data, fileConfig ?? {}, globalConfig);
+    const theme = resolveTheme(data, fileConfig ?? {}, globalConfig);
+    const pieces = buildThemePieces(theme);
     const orientation =
       String(data.orientation ?? "white").toLowerCase() === "black" ? "black" : "white";
 
@@ -136,6 +221,7 @@ export function ChessBoard({ yamlSource, fileConfig }: ChessBoardProps) {
           fen={board.fen()}
           caption={data.caption as string | undefined}
           colors={colors}
+          pieces={pieces}
           orientation={orientation as "white" | "black"}
           arrows={(data.arrows as ArrowDef[] | undefined) ?? []}
           highlight={data.highlight as string[] | undefined}
@@ -149,6 +235,7 @@ export function ChessBoard({ yamlSource, fileConfig }: ChessBoardProps) {
         steps={moves}
         caption={data.caption as string | undefined}
         colors={colors}
+        pieces={pieces}
         orientation={orientation as "white" | "black"}
       />
     );
@@ -166,11 +253,12 @@ function StaticBoard(props: {
   fen: string;
   caption?: string;
   colors: BoardColors;
+  pieces?: PieceRenderObject;
   orientation: "white" | "black";
   arrows: ArrowDef[];
   highlight?: string[];
 }) {
-  const { fen, caption, colors, orientation, arrows, highlight } = props;
+  const { fen, caption, colors, pieces, orientation, arrows, highlight } = props;
   const turnText =
     newChess(fen).turn() === "w" ? "White to move" : "Black to move";
   const figCaption = caption ? `${caption} — ${turnText}` : turnText;
@@ -187,6 +275,7 @@ function StaticBoard(props: {
           },
           darkSquareStyle: { backgroundColor: colors.darkSquare },
           lightSquareStyle: { backgroundColor: colors.lightSquare },
+          pieces,
           arrows: toCustomArrows(arrows),
           squareStyles: buildSquareStyles(highlight),
           allowDrawingArrows: false,
@@ -208,9 +297,10 @@ function InteractiveBoard(props: {
   steps: ParsedStep[];
   caption?: string;
   colors: BoardColors;
+  pieces?: PieceRenderObject;
   orientation: "white" | "black";
 }) {
-  const { initialFen, steps, caption, colors, orientation } = props;
+  const { initialFen, steps, caption, colors, pieces, orientation } = props;
   const [index, setIndex] = React.useState(0);
 
   const game = React.useMemo(() => {
@@ -281,6 +371,7 @@ function InteractiveBoard(props: {
             },
             darkSquareStyle: { backgroundColor: colors.darkSquare },
             lightSquareStyle: { backgroundColor: colors.lightSquare },
+            pieces,
             arrows: toCustomArrows(currentStep?.arrows ?? []),
             squareStyles: buildSquareStyles(currentStep?.highlight),
             allowDrawingArrows: false,
@@ -501,11 +592,7 @@ function resolveColors(
   fileConfig: Record<string, unknown>,
   globalConfig: Record<string, unknown>,
 ): BoardColors {
-  const themeName =
-    (blockData.theme as string) ||
-    (fileConfig.theme as string) ||
-    (globalConfig.theme as string) ||
-    DEFAULT_THEME;
+  const themeName = resolveTheme(blockData, fileConfig, globalConfig);
 
   const base = { ...(THEMES[themeName] ?? THEMES[DEFAULT_THEME]) };
 
@@ -521,6 +608,23 @@ function resolveColors(
   }
 
   return base;
+}
+
+/**
+ * Resolve the effective chess theme name, honouring block -> file -> global
+ * precedence and falling back to the default theme.
+ */
+function resolveTheme(
+  blockData: Record<string, unknown>,
+  fileConfig: Record<string, unknown>,
+  globalConfig: Record<string, unknown>,
+): string {
+  return (
+    (blockData.theme as string) ||
+    (fileConfig.theme as string) ||
+    (globalConfig.theme as string) ||
+    DEFAULT_THEME
+  );
 }
 
 function toCustomArrows(arrows: ArrowDef[]): Arrow[] {

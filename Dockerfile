@@ -15,6 +15,6 @@ VOLUME ["/notes"]
 EXPOSE 3000
 
 ENV NODE_ENV=production
-ENV DATABASE_URL="file:/root/.cache/markdown-render/challenges.db"
+ENV DATABASE_URL="file:/root/.cache/noty/challenges.db"
 
 CMD ["bun", "run", "start"]

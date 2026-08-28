@@ -30,13 +30,13 @@ bun run dev
 ```
 
 Then open http://localhost:3000. By default noty reads notes from
-`$HOME/notes` and a config file at `~/.config/markdown-render/config.yml`.
+`$HOME/notes` and a config file at `~/.config/noty/config.yml`.
 
 Build and run in production:
 
 ```sh
 bun run build
-DATABASE_URL="file:$HOME/.cache/markdown-render/challenges.db" bun run start
+DATABASE_URL="file:$HOME/.cache/noty/challenges.db" bun run start
 ```
 
 ### Docker
@@ -53,7 +53,7 @@ docker run --rm -p 3000:3000 \
 ```
 
 The image exposes port `3000` and by default initialises the challenges
-database at `/root/.cache/markdown-render/challenges.db`.
+database at `/root/.cache/noty/challenges.db`.
 
 ### Nix
 
@@ -99,22 +99,92 @@ Import the module and enable the service:
 
 The service runs `noty migrate deploy` on every start (a no-op once the
 schema is up to date) and serves the generated config file from
-`<dataDir>/.config/markdown-render/config.yml`. Full option reference lives
+`<dataDir>/.config/noty/config.yml`. Full option reference lives
 in `options.nix`.
 
 ## Configuration
 
-Noty reads `~/.config/markdown-render/config.yml` (written by the Docker and
-Nix paths, and editable during `bun` development):
+Noty is configured with a YAML file. It reads the merged configuration from
+`~/.config/noty/config.yml` (`$XDG_CONFIG_HOME/noty/config.yml`) for bun
+development. A commented starter is committed as
+[`config.yml.example`](./config.yml.example) — copy it into place and edit:
 
-```yaml
-notes_dir: /home/alice/notes
-challenges_root: /home/alice/ctf
-challenges_db_path: /home/alice/.cache/markdown-render/challenges.db
-mcp_enabled: true
-templates_search_dirs: [assets]
-chess_board:
-  theme: classic # classic | neo | green | midnight | walnut | dark-blue
-  colors: {}
-  pieces_dir: ""
+```sh
+mkdir -p ~/.config/noty
+cp config.yml.example ~/.config/noty/config.yml
 ```
+
+When running under Nix or Docker, that `config.yml` is generated for you from
+the `services.noty.*` options (see [NixOS module](#nixos-module) and
+[Docker](#docker) below) and written to the service's data directory, so you
+rarely need to hand-edit it.
+
+Every key is optional; Noty merges your file over its built-in defaults.
+
+### Options
+
+| Key | Type | Default | Description |
+| --- | ---- | ------- | ----------- |
+| `notes_dir` | string | `~/notes` | Root directory of the markdown notes collection to serve. Leading `~` is expanded. |
+| `challenges_root` | string | `""` (off) | Optional root directory to discover CTF challenge/vulnerability write-ups from. |
+| `challenges_db_path` | string | `~/.cache/noty/challenges.db` | Path of the SQLite database backing the challenges/vulnerabilities store. |
+| `mcp_enabled` | bool | `true` | Whether the Model Context Protocol (MCP) server integration is enabled. |
+| `templates_search_dirs` | string[] | `["assets"]` | Directories, relative to a note's folder, searched for user-defined templates. |
+| `chess_board.theme` | string | `"classic"` | Board theme (see [themes](#themes)). |
+| `chess_board.colors` | map | `{}` | Optional per-square colour overrides (see [colors](#colors)). |
+| `chess_board.pieces_dir` | string | `""` (off) | Path to a directory of custom SVG chess piece files. |
+
+#### Themes
+
+`chess_board.theme` selects a combination of board colours and, when available,
+custom piece artwork:
+
+| Theme | Square colours | Custom pieces |
+| ----- | -------------- | ------------- |
+| `classic` | Classic checkerboard | built-in |
+| `neo` | Blue-grey board | `public/chess/pieces/neo/` SVG set |
+| `green` | Green / cream | built-in |
+| `midnight` | Dark blue | built-in |
+| `walnut` | Warm wood | built-in |
+| `dark-blue` | Blue-grey | built-in |
+
+Any theme with assets under `public/chess/pieces/<theme>/` is picked up
+automatically: SVG files named `<color><type>.svg` (e.g. `bB.svg`, `wK.svg`)
+are used to render that theme's pieces, and the board falls back to the
+built-in pieces when no assets exist for the selected theme.
+
+#### Colors
+
+`chess_board.colors` lets you override the square colours on top of the chosen
+theme. Supported keys and the equivalent `react-chessboard` props:
+
+| Key | Effect |
+| --- | ------ |
+| `light_square` | Background of light squares |
+| `dark_square` | Background of dark squares |
+| `margin` | Board border colour |
+| `coordinates` | File/rank notation colour |
+
+### NixOS module options
+
+When using the NixOS module, configure Noty with the `services.noty.*`
+options instead of hand-editing `config.yml`. The option values map onto the
+same settings above:
+
+| Option | Type | Default |
+| ------ | ---- | ------- |
+| `enable` | bool | `false` |
+| `package` | package | `noty.packages.<system>.default` |
+| `dataDir` | path | `/var/lib/noty` |
+| `notesDir` | path | `<dataDir>/notes` |
+| `challengesRoot` | nullOr path | `null` |
+| `challengesDbPath` | path | `<dataDir>/.cache/noty/challenges.db` |
+| `mcpEnabled` | bool | `true` |
+| `chessBoard.theme` | enum | `"classic"` |
+| `chessBoard.colors` | attrsOf str | `{}` |
+| `chessBoard.piecesDir` | nullOr path | `null` |
+| `templatesSearchDirs` | listOf str | `["assets"]` |
+| `port` | port | `3000` |
+| `host` | string | `127.0.0.1` |
+| `openFirewall` | bool | `false` |
+| `environment` | attrsOf str | `{}` |

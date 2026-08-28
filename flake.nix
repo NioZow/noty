@@ -175,7 +175,7 @@
             export PRISMA_SCHEMA_ENGINE_BINARY="${engines}/bin/schema-engine"
             export PRISMA_QUERY_ENGINE_BINARY="${engines}/bin/query-engine"
             export PRISMA_QUERY_ENGINE_LIBRARY="${engines}/lib/libquery_engine.node"
-            export DATABASE_URL="\''${DATABASE_URL:-file:\$HOME/.cache/markdown-render/challenges.db}"
+            export DATABASE_URL="\''${DATABASE_URL:-file:\$HOME/.cache/noty/challenges.db}"
             exec ${pkgs.bun}/bin/bun run start "\$@"
             EOF
             chmod +x "$out/bin/noty"

@@ -22,7 +22,7 @@ import { readFileSync } from "node:fs";
 // ---------------------------------------------------------------------------
 
 function loadConfig(): { notes_dir: string } {
-  const configPath = path.join(os.homedir(), ".config", "markdown-render", "config.yml");
+  const configPath = path.join(os.homedir(), ".config", "noty", "config.yml");
   const defaults = { notes_dir: path.join(os.homedir(), "notes") };
 
   if (!existsSync(configPath)) return defaults;

@@ -21,7 +21,7 @@ import { invalidateBacklinksCache } from "./backlinks";
 
 const _emitter = new EventEmitter();
 
-const TOKEN_PATH = path.join(tmpdir(), "markdown-render-reload-token");
+const TOKEN_PATH = path.join(tmpdir(), "noty-reload-token");
 
 function readToken(): number {
   try {

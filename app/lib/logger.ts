@@ -1,5 +1,5 @@
 /**
- * Coloured terminal logger for the markdown-render rewrite.
+ * Coloured terminal logger for the noty rewrite.
  *
  * Port of the original Python `src/renderer/logging_utils.py`. Provides a
  * lightweight logger that prefixes messages with styled badges:
@@ -43,7 +43,7 @@ export class Logger {
 
   private readonly useColour: boolean;
 
-  constructor(name: string = "markdown-render") {
+  constructor(name: string = "noty") {
     this.name = name;
     this.useColour = Boolean(process.stdout.isTTY);
   }
@@ -121,6 +121,6 @@ export class Logger {
  * @param name - Name of the subsystem (e.g. `"challenge-sync"`)
  * @returns A new {@link Logger} instance
  */
-export function getLogger(name: string = "markdown-render"): Logger {
+export function getLogger(name: string = "noty"): Logger {
   return new Logger(name);
 }

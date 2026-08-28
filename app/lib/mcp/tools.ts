@@ -1,5 +1,5 @@
 /**
- * MCP (Model Context Protocol) tool implementations for the markdown-render
+ * MCP (Model Context Protocol) tool implementations for the noty
  * rewrite.
  *
  * Ported from the original Python `src/renderer/mcp_server.py` into TypeScript.

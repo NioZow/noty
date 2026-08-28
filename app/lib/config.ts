@@ -1,8 +1,8 @@
 /**
- * Configuration loader for the markdown-render rewrite.
+ * Configuration loader for the noty rewrite.
  *
  * Port of the original Python `src/renderer/config.py`. Reads
- * `~/.config/markdown-render/config.yml` and merges it over the built-in
+ * `~/.config/noty/config.yml` and merges it over the built-in
  * defaults. Keys use snake_case on purpose so the shape matches the YAML
  * config file (and the Python API) one-to-one.
  *
@@ -21,7 +21,7 @@ import { load as loadYaml } from "js-yaml";
 export const CONFIG_PATH: string = path.join(
   os.homedir(),
   ".config",
-  "markdown-render",
+  "noty",
   "config.yml",
 );
 
@@ -68,7 +68,7 @@ function buildDefaultConfig(): MarkdownRenderConfig {
   return {
     notes_dir: path.join(homeDir, "notes"),
     challenges_root: "",
-    challenges_db_path: path.join(homeDir, ".cache", "markdown-render", "challenges.db"),
+    challenges_db_path: path.join(homeDir, ".cache", "noty", "challenges.db"),
     chess_board: {
       theme: "classic",
       colors: {},

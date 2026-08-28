@@ -1,0 +1,40 @@
+# Noty configuration example
+#
+# Copy this file to `~/.config/noty/config.yml` (i.e. `$XDG_CONFIG_HOME/noty/config.yml`)
+# and edit it to suit your setup. Noty merges this file over its built-in
+# defaults, so every key below is optional — you can omit the ones you don't
+# need.
+#
+# Keys use snake_case to match the config file shape handed to the renderer.
+
+# Root directory of the markdown notes collection to serve.
+notes_dir: ~/notes
+
+# Optional root directory to discover CTF challenge / vulnerability write-ups from.
+challenges_root: ~/ctf
+
+# Path of the SQLite database backing the challenges/vulnerabilities store.
+challenges_db_path: ~/.cache/noty/challenges.db
+
+# Whether the Model Context Protocol (MCP) server integration is enabled.
+mcp_enabled: true
+
+# Directories, relative to a note's folder, searched for user-defined templates.
+templates_search_dirs:
+  - assets
+
+# Chess board rendering configuration.
+chess_board:
+  # Board theme. Options: classic | neo | green | midnight | walnut | dark-blue
+  # Themes that ship custom piece assets in `public/chess/pieces/<theme>/` use
+  # them automatically (e.g. "neo"); other themes fall back to built-in pieces.
+  theme: classic
+
+  # Optional square-colour overrides. Keys: light_square, dark_square, margin, coordinates.
+  colors:
+    # light_square: "#eeeed2"
+    # dark_square: "#769656"
+
+  # Optional path to a directory of custom SVG chess piece files.
+  # Overrides the bundled theme pieces when set.
+  pieces_dir: ""

@@ -35,7 +35,7 @@ import {
 } from "../mcp/tools";
 
 /**
- * Return a fully-configured {@link McpServer} with all markdown-render tools.
+ * Return a fully-configured {@link McpServer} with all noty tools.
  *
  * The server is wired to the notes directory via the existing config layer
  * (`app/lib/config.ts`) so no extra initialisation is needed here.

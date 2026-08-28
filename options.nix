@@ -65,8 +65,8 @@ in {
 
     challengesDbPath = lib.mkOption {
       type = lib.types.path;
-      default = "${cfg.dataDir}/.cache/markdown-render/challenges.db";
-      defaultText = lib.literalExpression ''"''${config.services.noty.dataDir}/.cache/markdown-render/challenges.db"'';
+      default = "${cfg.dataDir}/.cache/noty/challenges.db";
+      defaultText = lib.literalExpression ''"''${config.services.noty.dataDir}/.cache/noty/challenges.db"'';
       description = "Path of the SQLite database backing the challenges/vulnerabilities store.";
     };
 
@@ -139,10 +139,10 @@ in {
     systemd.tmpfiles.rules = [
       "d ${cfg.dataDir} 0750 root root - -"
       "d ${cfg.dataDir}/.config 0750 root root - -"
-      "d ${cfg.dataDir}/.config/markdown-render 0750 root root - -"
+      "d ${cfg.dataDir}/.config/noty 0750 root root - -"
       "d ${cfg.dataDir}/.cache 0750 root root - -"
-      "d ${cfg.dataDir}/.cache/markdown-render 0750 root root - -"
-      "L+ ${cfg.dataDir}/.config/markdown-render/config.yml - - - - ${configFile}"
+      "d ${cfg.dataDir}/.cache/noty 0750 root root - -"
+      "L+ ${cfg.dataDir}/.config/noty/config.yml - - - - ${configFile}"
     ];
 
     systemd.services.noty = {
