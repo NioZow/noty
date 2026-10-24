@@ -77,7 +77,7 @@
       # -----------------------------------------------------------------------
       nodeModulesHashes = {
         aarch64-linux = "sha256-YMgWJCr3cLte+EB3OYle4Fv6ZpGb62w5ecrDSuML8Cg="; # populated via `just regenerate-hash`
-        x86_64-linux = lib.fakeHash;
+        x86_64-linux = "sha256-awObgAFwizZ0obm2w7iuwGGoNlqbuXf7n5Eohk23WzM="; # populated via `just regenerate-hash`
         aarch64-darwin = "sha256-nukSoMcHtVAEQ2ZxrNYa6JZyM68MF+FdqguW9m5SijQ="; # populated via `just regenerate-hash`
         x86_64-darwin = lib.fakeHash;
       };
