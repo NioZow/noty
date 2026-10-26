@@ -167,6 +167,8 @@
             runHook preInstall
             mkdir -p "$out/app" "$out/bin"
             cp -r .next node_modules public prisma package.json bun.lock next.config.ts instrumentation.ts instrumentation-node.ts "$out/app/"
+            mkdir -p "$out/app/scripts"
+            cp scripts/watch.ts "$out/app/scripts/watch.ts"
             cat > "$out/bin/noty" <<EOF
             #!/usr/bin/env bash
             set -euo pipefail
@@ -176,7 +178,18 @@
             export PRISMA_QUERY_ENGINE_BINARY="${engines}/bin/query-engine"
             export PRISMA_QUERY_ENGINE_LIBRARY="${engines}/lib/libquery_engine.node"
             export DATABASE_URL="\''${DATABASE_URL:-file:\$HOME/.cache/noty/challenges.db}"
-            exec ${pkgs.bun}/bin/bun run start "\$@"
+
+            ${pkgs.bun}/bin/bun scripts/watch.ts &
+            watcher_pid=\$!
+
+            ${pkgs.bun}/bin/bun run start "\$@" &
+            server_pid=\$!
+
+            trap 'kill "\$watcher_pid" "\$server_pid" 2>/dev/null || true' EXIT INT TERM
+
+            status=0
+            wait "\$server_pid" || status=\$?
+            exit "\$status"
             EOF
             chmod +x "$out/bin/noty"
             runHook postInstall

@@ -151,6 +151,8 @@ in {
         PRISMA_SCHEMA_ENGINE_BINARY = "${prismaEngines}/bin/schema-engine";
         PRISMA_QUERY_ENGINE_BINARY = "${prismaEngines}/bin/query-engine";
         PRISMA_QUERY_ENGINE_LIBRARY = "${prismaEngines}/lib/libquery_engine.node";
+        # Shared by the wrapper's watcher and the server so hot reload works.
+        NOTY_RELOAD_TOKEN_FILE = "${cfg.dataDir}/.cache/noty/reload-token";
       };
 
       serviceConfig = {

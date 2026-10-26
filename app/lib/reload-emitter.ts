@@ -3,15 +3,13 @@
  * file watcher to all connected SSE clients.
  *
  * The token is persisted to a temp file so that the standalone watcher
- * process and the Next.js dev server process share the same value.
+ * process and the Next.js server process share the same value.
  *
  * @module reload-emitter
  */
 
 import { EventEmitter } from "node:events";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { getReloadToken, writeReloadToken } from "./reload-token";
 import {
   invalidateRenderCache,
   invalidateWikiCache,
@@ -19,29 +17,9 @@ import {
 } from "./render-markdown";
 import { invalidateBacklinksCache } from "./backlinks";
 
+export { getReloadToken } from "./reload-token";
+
 const _emitter = new EventEmitter();
-
-const TOKEN_PATH = path.join(tmpdir(), "noty-reload-token");
-
-function readToken(): number {
-  try {
-    if (existsSync(TOKEN_PATH)) {
-      const val = parseInt(readFileSync(TOKEN_PATH, "utf-8"), 10);
-      return Number.isNaN(val) ? 0 : val;
-    }
-  } catch {
-    // ignore
-  }
-  return 0;
-}
-
-function writeToken(val: number): void {
-  try {
-    writeFileSync(TOKEN_PATH, String(val), "utf-8");
-  } catch {
-    // ignore
-  }
-}
 
 /**
  * The singleton reload emitter.  SSE route handlers subscribe to this
@@ -52,10 +30,13 @@ export function getReloadEmitter(): EventEmitter {
 }
 
 /**
- * Return a monotonically-increasing token that changes on every reload.
+ * Clear all server-side render caches.
  */
-export function getReloadToken(): number {
-  return readToken();
+export function invalidateAllCaches(): void {
+  invalidateRenderCache();
+  invalidateWikiCache();
+  invalidateVulnCache();
+  invalidateBacklinksCache();
 }
 
 /**
@@ -63,8 +44,8 @@ export function getReloadToken(): number {
  * reload event so clients know to refresh.
  */
 export function bumpReloadToken(): void {
-  const next = readToken() + 1;
-  writeToken(next);
+  const next = getReloadToken() + 1;
+  writeReloadToken(next);
 
   invalidateRenderCache();
   invalidateWikiCache();

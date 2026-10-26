@@ -11,11 +11,32 @@
  *   bun run scripts/watch.ts /path    # Override directory to watch
  */
 
-import { statSync, readdirSync, existsSync } from "node:fs";
+import { statSync, readdirSync, existsSync, readFileSync, writeFileSync, renameSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { load as loadYaml } from "js-yaml";
-import { readFileSync } from "node:fs";
+
+// Shared with the Next.js server via `NOTY_RELOAD_TOKEN_FILE` so both processes
+// read/write the same monotonic counter.
+const TOKEN_PATH =
+  process.env.NOTY_RELOAD_TOKEN_FILE ?? path.join(os.tmpdir(), "noty-reload-token");
+
+function readToken(): number {
+  try {
+    if (!existsSync(TOKEN_PATH)) return 0;
+    const val = parseInt(readFileSync(TOKEN_PATH, "utf-8"), 10);
+    return Number.isNaN(val) ? 0 : val;
+  } catch {
+    return 0;
+  }
+}
+
+function bumpToken(): void {
+  const next = readToken() + 1;
+  const tmp = `${TOKEN_PATH}.${process.pid}.tmp`;
+  writeFileSync(tmp, String(next), "utf-8");
+  renameSync(tmp, TOKEN_PATH);
+}
 
 // ---------------------------------------------------------------------------
 // Config loader (lightweight inline version to avoid full config.ts deps)
@@ -111,10 +132,7 @@ function snapshotString(snap: Map<string, number>): string {
 
 async function broadcastReload() {
   try {
-    const { bumpReloadToken } = await import(
-      new URL("../app/lib/reload-emitter.ts", import.meta.url).pathname
-    );
-    bumpReloadToken();
+    bumpToken();
     console.log(`[watch] reload triggered`);
   } catch (err) {
     console.error("[watch] Failed to broadcast reload:", err);

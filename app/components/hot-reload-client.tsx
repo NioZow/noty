@@ -13,14 +13,13 @@ const MIN_RELOAD_MS = 3000; // debounce: never reload more often than 3s
  * Uses `router.refresh()` instead of `window.location.reload()` so the update
  * is smooth (no full page flash) and scroll position is preserved.
  */
-export function useHotReload() {
+export function useHotReload(initialToken = 0) {
   const router = useRouter();
 
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    if (process.env.NODE_ENV !== "development") return;
 
-    let lastToken: number | null = null;
+    let lastToken = initialToken;
     let cancelled = false;
     let lastReloadAt = 0;
 
@@ -34,11 +33,6 @@ export function useHotReload() {
         if (!res.ok) return;
         const json = (await res.json()) as { token?: number };
         const token = json.token ?? 0;
-
-        if (lastToken === null) {
-          lastToken = token;
-          return;
-        }
 
         if (token !== lastToken) {
           lastToken = token;
@@ -63,10 +57,10 @@ export function useHotReload() {
       cancelled = true;
       clearInterval(interval);
     };
-  }, [router]);
+  }, [router, initialToken]);
 }
 
-export function HotReloadClient() {
-  useHotReload();
+export function HotReloadClient({ initialToken = 0 }: { initialToken?: number }) {
+  useHotReload(initialToken);
   return null;
 }

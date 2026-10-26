@@ -14,8 +14,9 @@ import { readdir, lstat, readFile } from "node:fs/promises";
 import { extractFrontmatter, extractFirstH1 } from "./markdown-utils";
 import { notesDir } from "./config";
 import { resolveNotePath, TraverseError } from "./file-resolver";
-import { getBacklinks } from "./backlinks";
+import { getBacklinks, invalidateBacklinksCache } from "./backlinks";
 import { FEAT_WIKI_LINKS, FEAT_VULN_LINKS } from "./features";
+import { syncReloadToken } from "./reload-token";
 
 interface GlobalRenderMarkdownCache {
   _renderCache?: Map<string, { slug: string; promise: Promise<RenderedNote>; ts: number }>;
@@ -63,6 +64,13 @@ export interface RenderedNote {
 }
 
 export async function renderNotePage(slug: string): Promise<RenderedNote> {
+  if (syncReloadToken()) {
+    invalidateRenderCache();
+    invalidateWikiCache();
+    invalidateVulnCache();
+    invalidateBacklinksCache();
+  }
+
   const now = Date.now();
   const cached = _global._renderCache!.get(slug);
 
